@@ -398,8 +398,6 @@ calc.stat <- function (assoc1, assoc2, ld0, ld2, R2thr) {
     postP1 <- exp(logP1) / sum(exp(logP1))
     local <- which(ld0[maxI1, ]**2 >= R2thr)
 
-    cat(paste("nonpeakPP1.ld0: ", sum(postP1[-local]), "\n", sep=''))
-
     gap <- 0
     sumRelP1 <- sum(relP1[local])
     
