@@ -5,34 +5,35 @@ JLIM is a cross-trait test of shared causal effect, which is described in Chun e
 
 ## How to install
 
-The core JLIM module is implemented as an R extension. The installable R module (jlimR) is included in the distribution file. jlimR depends on **getopt** module. If it is not installed, getopt can be installed from CRAN by:
+The core JLIM module is implemented as an R extension (**jlimR**). **jlimR** depends on **getopt** module. If it is not installed, **getopt** can be installed from CRAN by:
 
 ```
 Rscript -e 'install.packages("getopt", repos="http://cran.r-project.org")' 
 ```
 
-jlimR can be installed by:
+After **getopt** has been installed, **jlimR** (included in the distribution file) can be installed by:
  
 ```
-cd jlim-1.0
-
-R CMD INSTALL jlimR_1.0.tar.gz
-```
-
-In case that it is preferred to install R extensions in home directory (e.g. ~/R) instead of the default system path, please run the following instead: 
-```
-Rscript -e 'install.packages("getopt", “~/R”, repos="http://cran.r-project.org")' 
+tar -zxvf jlim-1.0.tar.gz 
 
 cd jlim-1.0
 
 R CMD INSTALL jlimR_1.0.tar.gz
+```
+
+In case that it is preferred to install R extensions in your home directory (e.g. ~/R) instead of the default system path, please do the following instead: 
+```
+Rscript -e 'install.packages("getopt", "~/R", repos="http://cran.r-project.org")' 
+
+cd jlim-1.0
+
+R CMD INSTALL -l ~/R jlimR_1.0.tar.gz
 
 ```
-And then, add your R library to **R_LIBS** environment variable in your .bashrc or .profile as:
+And then, add your local R library path to **R_LIBS** environment variable in .bashrc or .profile as:
 ```
 export R_LIBS=~/R:$R_LIBS
 ```
-
 
 
 ## How to run JLIM on provided example  
@@ -52,7 +53,7 @@ cd jlim-1.0
 
 bin/jlim_gencfg.sh --tr1-name MS --tr1-dir examples/MS --tr2-dir examples/LCL --idxSNP-file examples/MS/MS-indexSNP.tsv --refld-dir examples/ld0/ --out examples/jlim.cfg.tsv 
 
-bin/run_jlim.sh examples/jlim.cfg.tsv 0.8 examples/jlim.out.tsv
+bin/run_jlim.sh examples/jlim.cfg.tsv 0.8 examples/jlim.out.tsv > examples/jlim.out.log
 ```
 
 ## File formats

@@ -1,3 +1,3 @@
 #! /bin/bash
 
-Rscript -e 'library(getopt); jlimR:::jlim.gencfg()' ARGSTART $* 
+Rscript -e 'library(getopt);' -e 'jlimR:::jlim.gencfg()' ARGSTART $* 
