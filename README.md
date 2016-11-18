@@ -149,8 +149,7 @@ bin/fetch.refld0.EUR.pl /data/1000genomes/ftp/release/20130502/ examples/MS/MS-i
 - Generate secondary trait genotypes (.ped.gz files).
 - Generate secondary trait association and mperm files. For example, 
 ```
-plink --bfile region1 --pheno gene1tx.pheno --linear --out LCL.gene1 --covar yourcov \
---mperm 1000 --merpm-save-all --chr yourCHR --from-bp yourSTARTBP --end-bp yourENDBP
+plink --bfile region1 --pheno gene1tx.pheno --linear --out LCL.gene1 --covar yourcov --mperm 1000 --merpm-save-all --chr yourCHR --from-bp yourSTARTBP --end-bp yourENDBP
 
 gzip LCL.gene1.assoc.linear
 
