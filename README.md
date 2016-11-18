@@ -127,6 +127,7 @@ The JLIM out contains two columns:
 - p: p-value by permutation. The p-value of 0 means that the JLIM statistic is more extreme than permutation.
 
 Example: 
+
 | STAT | p |
 | --- | --- |
 | 3.75229222129719 | 0 |
