@@ -81,7 +81,7 @@ Primary trait file is named by *TraitName*.*CHR*.*STARTBP*.*ENDBP*.txt. It is sp
 Example:
 
 | CHR BP SNP P |
-| --- |
+| :--- |
 | 1 160698276 rs564141 9.3179999999999999E-3 |
 | 1 160700126 rs116424351 0.83330000000000004 |
 | 1 160702475 rs576627 8.5309999999999997E-2 |
