@@ -1,7 +1,7 @@
 ﻿
 # Joint Likelihood Mapping (JLIM) 
 
-JLIM is a cross-trait test of shared causal effect, which is described in Chun et al. ([BioRxiv](http://biorxiv.org/content/early/2016/05/12/053165)). JLIM tests whether two traits – main and secondary – are driven by shared causal effect or not. Typically, the main trait is a large GWAS study, and secondary trait can be an expression Quantitative Trait Loci (eQTL) association study. For main trait, JLIM takes only summary-level association statistics, but for secondary trait, it requires genotype-level data to generate permutation-based null distribution. 
+JLIM is a cross-trait test of shared causal effect, which is described in Chun et al. ([BioRxiv](http://biorxiv.org/content/early/2016/05/12/053165)). JLIM tests whether two traits – main and secondary – are driven by shared causal effect or not. Typically, the main trait is a large GWAS study, and secondary trait can be an expression Quantitative Trait Loci (eQTL) association study. For main trait, JLIM takes only summary-level association statistics, but for secondary trait, it requires genotype-level data to generate permutation-based null distribution. JLIM is simultaneously released at [Cotsapas lab github](https://github.com/cotsapaslab/jlim) and [Sunyaev lab website](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/jlim). 
 
 ## How to install
 
