@@ -64,12 +64,24 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
     assoc1 <- read.table(maintr.file, header=TRUE, stringsAsFactors=FALSE)
 
     # Note: PtoZ doesn't account for direction of effect
-    if ("STAT" %in% colnames(assoc1)) {
+    if ("Z" %in% colnames(assoc1)) {
+        # use provided Z 
+    } else if ("STAT" %in% colnames(assoc1)) {
         assoc1 <- cbind(assoc1, Z=assoc1$STAT)
     } else if ("T" %in% colnames(assoc1)) {
         assoc1 <- cbind(assoc1, Z=assoc1$T)
-    } else {
+    } else if ("P" %in% colnames(assoc1)) {
         assoc1 <- cbind(assoc1, Z=PtoZ(assoc1$P))
+        
+        if (sum(assoc1$P == 0) > 0) {
+            cat(paste("P-value = 0 for", sum(assoc1$P == 0),
+                      "SNP(s) in ", maintr.file,
+                      ": check for potential numerical underflow\n"))
+            stop()
+        }
+    } else {
+        cat(paste("Cannot find association statistics in", maintr.file))
+        stop()
     }
 
     # Save table containing the full set of markers in their original order
@@ -142,7 +154,9 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
         assoc2 <- assoc2[assoc2$TEST == "ADD", ]
     }
 
-    if ("STAT" %in% colnames(assoc2)) {
+    if ("Z" %in% colnames(assoc2)) {
+        # Use provided Z    
+    } else if ("STAT" %in% colnames(assoc2)) {
         assoc2 <- cbind(assoc2, Z=assoc2$STAT)
     } else if ("T" %in% colnames(assoc2)) {
         assoc2 <- cbind(assoc2, Z=assoc2$T)
@@ -182,21 +196,46 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
         assoc2 <- assoc2[!is.na(assoc2$P), ]
     }
 
+    # filter rare from refgt
+    ld0.maf <- NULL
+    
+    if (length(grep(".hap$", refld.file)) > 0) {
+        # FIXME: filter by MAF
+    } else {
+        ld0.maf <- calcMAF.refLD.vcf(refgt, rep(TRUE, nrow(refgt)))
+
+        refgt <- refgt[ld0.maf >= 0.05, ]
+        ld0.maf <- ld0.maf[ld0.maf >= 0.05]
+    }
+    
     # exclude overlapping variants
     if (sum(duplicated(refgt$POS)) > 0) {
-        MSG("Duplicated POS in refgt", sum(duplicated(refgt$POS)))
-        refgt <- refgt[!duplicated(refgt$POS), ]
+        dup.POS <- refgt$POS[duplicated(refgt$POS)]
+
+        MSG("Removing multiple common alleles at same BP in refgt: BP =",
+            paste(dup.POS, collapse=", "))
+        
+        ld0.maf <- ld0.maf[!(refgt$POS %in% dup.POS)]
+        refgt <- refgt[!(refgt$POS %in% dup.POS), ]
     }
 
     if (sum(duplicated(assoc1$BP)) > 0) {
-        PL("duplicated POS in tr1", sum(duplicated(assoc1$BP)))
-        assoc1 <- assoc1[!duplicated(assoc1$BP), ]
+        dup.POS <- assoc1$BP[duplicated(assoc1$BP)]
+
+        MSG("Removing multiple common alleles at same BP in trait 1: BP =",
+            paste(dup.POS, collapse=", "))
+
+        assoc1 <- assoc1[!(assoc1$BP %in% dup.POS), ]
     }
 
-    if (sum(duplicated(assoc2$BP)) > 0) {
-        PL("duplicated POS in tr1", sum(duplicated(assoc2$BP)))
-        permmat <- permmat[, !duplicated(assoc2$BP)]    
-        assoc2 <- assoc2[!duplicated(assoc2$BP), ]
+    if (sum(duplicated(assoc2$BP)) > 0) {        
+#        PL("duplicated POS in tr2", sum(duplicated(assoc2$BP)))
+#        permmat <- permmat[, !duplicated(assoc2$BP)]    
+#        assoc2 <- assoc2[!duplicated(assoc2$BP), ]
+
+        cat(paste("multiple alleles are prohibited at the same BP:",
+                  sectr.file))
+        stop()
     }
 
     # enforce the boundary of tested region
@@ -287,7 +326,9 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
 #            abline(v=0.8, col="red")
 #        }
 
-    } else if (length(grep("dosage.txt", secld.file)) > 0) {
+    } else if ((length(grep("dosage.txt$", secld.file)) > 0) ||
+               (length(grep("dosage.txt.gz$", secld.file)) > 0) ||
+               (length(grep("dosage.gz$", secld.file)) > 0)) {
         # internal allelic dosage format
         
         cat("Derive LD for secondary trait from imputed dosages...\n")
@@ -323,12 +364,15 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
 
         # Default choice
         PL("Use Ref LD for main trait...\n")
-    
-    } else if (length(grep("dosage.txt", mainld.file)) > 0) {
+
+    } else if ((length(grep("dosage.txt$", mainld.file)) > 0) ||
+               (length(grep("dosage.txt.gz$", mainld.file)) > 0) ||
+               (length(grep("dosage.gz$", mainld.file)) > 0)) {
         
         cat("Derive LD for main trait from imputed genotypes...\n")
 
         ld0 <- load.isLD1.dosage2(mainld.file, all.sel)
+        ld0.maf <- NULL
 
         ASSERT(nrow(ld0) == nrow(ld1))
 
@@ -343,6 +387,7 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
         ASSERT(nrow(ld0) == nrow(ld1))
 
         ld0 <- ld1
+        ld0.maf <- NULL
 
     } else {
         PL("ERROR: Unsupported mainld", mainld.file)
@@ -368,9 +413,29 @@ jlim.test <- function(maintr.file, sectr.file, refld.file,
 
     ld0.t <- ld0[assoc1$BP %in% markers.t, assoc1$BP %in% markers.t]
     ld2.t <- ld2[assoc2$BP %in% markers.t, assoc2$BP %in% markers.t]
-    
+
     assoc1.t <- assoc1[assoc1$BP %in% markers.t, ]
     assoc2.t <- assoc2[assoc2$BP %in% markers.t, ]
+
+    if (!is.null(ld0.maf)) {
+        ld0.maf.t <- ld0.maf[assoc1$BP %in% markers.t]
+
+        if (sum(is.na(ld0.maf.t)) > 0) {
+            cat(paste("NA in ref LD matrix:", refld.file))
+            stop()
+        }
+
+        if (sum(ld0.maf.t == 0) > 0) {
+            cat(paste("monomorphic SNPs in ref LD matrix:", refld.file, ": BP=",
+                      paste(names(ld0.maf.t)[ld0.maf.t == 0], collapse=", ")))
+            stop()
+        }
+    }
+    
+    if (sum(is.na(ld0.t)) > 0) {
+        cat(paste("NA or monomorphic SNP in ref LD matrix:", refld.file))
+        stop()
+    }
 
 
     #########################################################################

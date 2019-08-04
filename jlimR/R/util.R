@@ -67,3 +67,7 @@ to.refal <- function (assoc) {
 PtoZ <- function(pv) {
     -qnorm(pv/2)
 }
+
+log10PtoZ <- function(pv) {
+    -qnorm(pv * log(10) - log(2), log.p=TRUE)
+}

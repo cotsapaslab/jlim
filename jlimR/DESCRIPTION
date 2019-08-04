@@ -1,17 +1,20 @@
 Package: jlimR
-Version: 1.0.2
-Date: 2016-10-14
+Version: 2.0
+Date: 2019-08-05
 Title: Joint Likelihood Mapping (JLIM)
 Authors@R: c(person("Sung", "Chun", role = c("aut", "cre"),
-	     email = "sgchun@research.bwh.harvard.edu"),
+	     email = "sung.g.chun@gmail.com"),
+             person("Sebastian", "Akle", role = "aut",
+             email = "sebastian.akle@gmail.com"),
              person("Shamil", "Sunyaev", role = "aut"),
              person("Chris", "Cotsapas", role = "aut"))
 Author: Sung Chun [aut, cre],
+    Sebastian Akle [aut], 
     Shamil Sunyaev [aut],
     Chris Cotsapas [aut]
-Maintainer: Sung Chun <sgchun@research.bwh.harvard.edu>
-Description: Cross-trait test of shared causal effect described in Chun et al.
-    (http://biorxiv.org/content/early/2016/05/12/053165).
+Maintainer: Sung Chun <sung.g.chun@gmail.com>
+Description: Cross-trait test of shared causal effect described in Chun et al. Nature Genetics 2017.
+    (http://www.nature.com/articles/ng.3795).
 License: GPL
 Depends:
     getopt, methods

@@ -39,9 +39,11 @@ jlim.gencfg <- function () {
         'idxSNP-file', 'x', 1, 'character',
         'tr2-dir', 's', 1, 'character',
         'refld-dir', 'l', 1, 'character',
-        
+
+        'tr2-genotype-filetype', 'g', 1, 'character',
         'out', 'o', 1, 'character',
-        'p-tr2-cutoff', 'p', 1, 'numeric'
+        'p-tr2-cutoff', 'p', 1, 'numeric',
+        'maf-cutoff', 'f', 1, 'numeric'
 #        , 'reassign-window', 'W', 0, 'logical'
         
         ), byrow=TRUE, ncol=4)
@@ -78,6 +80,8 @@ jlim.gencfg <- function () {
 
     cfgfile <- opt[["out"]]
     minP2co <- opt[["p-tr2-cutoff"]]
+    minMAF <- opt[["maf-cutoff"]]
+    tr2gttype <- opt[["tr2-genotype-filetype"]]
 
     if (!file.exists(idxSNPfile)) {
         cat(paste("File does not exist:", idxSNPfile, "\n"))
@@ -106,6 +110,20 @@ jlim.gencfg <- function () {
 
     if (is.null(minP2co)) {
         minP2co <- 0.01
+    }
+
+    if (is.null(minMAF)) {
+        minMAF <- 0.05
+    }
+
+    if (is.null(tr2gttype)) {
+        tr2gttype <- "ped"
+    }
+
+    if (tr2gttype != "ped" && tr2gttype != "dosage") {
+        cat(paste("tr2-genotype-filetype should be either ped or dosage:",
+                  tr2gttype, "\n"))
+        q(status=1)
     }
 
     # Print out set-up
@@ -174,6 +192,8 @@ jlim.gencfg <- function () {
         # interval identifier
         locusname <- paste(chrom, startpos, endpos, sep=".")
 
+        PL("Scanning", locusname)
+
         # reference LD
         refgt0.file <- paste(reflddir, "/locus.", locusname, ".txt.gz", sep='')
         refgt0 <-
@@ -186,13 +206,24 @@ jlim.gencfg <- function () {
         if (sum(substr(refgt0$ID, 1, 3) == "esv") > 0) {
             refgt0 <- refgt0[substr(refgt0$ID, 1, 3) != "esv", ]
         }
+
+        # filter rare from refgt
+        ld0.maf <- calcMAF.refLD.vcf(refgt0, rep(TRUE, nrow(refgt0)))
+
+        refgt0 <- refgt0[ld0.maf >= 0.05, ]
+        ld0.maf <- ld0.maf[ld0.maf >= 0.05]
         
         # exclude overlapping variants
         if (sum(duplicated(refgt0$POS)) > 0) {
-            #PL("# duplicated POS in refgt", sum(duplicated(refgt0$POS)))
-            refgt0 <- refgt0[!duplicated(refgt0$POS), ]
-        }
+            dup.POS <- refgt0$POS[duplicated(refgt0$POS)]
 
+            MSG("Removing multiple common alleles at same BP in refgt: BP =",
+                paste(dup.POS, collapse=", "))
+            
+            ld0.maf <- ld0.maf[!(refgt0$POS %in% dup.POS)]
+            refgt0 <- refgt0[!(refgt0$POS %in% dup.POS), ]
+        }
+        
         # eQTL gene list
         tr2subdir <- paste(tr2dir, "/locus.", locusname, sep='')
 
@@ -205,9 +236,10 @@ jlim.gencfg <- function () {
             list.files(tr2subdir,
                        paste("[^.]+.*.assoc.linear.gz", sep=''))
 
-        print(prefix2list)
+        #print(prefix2list)
 
         if (length(prefix2list) == 0) {
+            PL("No secondary trait available", tr2subdir)
             next
         }
 
@@ -232,15 +264,31 @@ jlim.gencfg <- function () {
         assoc1 <- read.table(tr1path, header=TRUE, stringsAsFactors=FALSE)
         
         assoc1 <- assoc1[!is.na(assoc1$P), ]
-        assoc1 <- cbind(assoc1, Z=PtoZ(assoc1$P))
+
+        # Estimate Z statistics from P-values unless provided
+        if (!("Z" %in% colnames(assoc1))) {
+            assoc1 <- cbind(assoc1, Z=PtoZ(assoc1$P))
+
+            if (sum(assoc1$P == 0) > 0) {
+                cat(paste("P-value = 0 for", sum(assoc1$P == 0),
+                          "SNP(s) in the window around",
+                          idxSNP, ": check for potential numerical underflow\n"))
+                q(status=1)
+            }
+        }
+        
         dim(assoc1)
             
         # exclude overlapping variants
         if (sum(duplicated(assoc1$BP)) > 0) {
-            PL("Note: No of duplicated POS in tr1", sum(duplicated(assoc1$BP)))
-            assoc1 <- assoc1[!duplicated(assoc1$BP), ]
+            dup.POS <- assoc1$BP[duplicated(assoc1$BP)]
+
+            MSG("Removing multiple common alleles at same BP in trait 1: BP =",
+                paste(dup.POS, collapse=", "))
+
+            assoc1 <- assoc1[!(assoc1$BP %in% dup.POS), ]
         }
-            
+        
         idxP <- assoc1[assoc1$BP == idxSNP.bp, "P"]
 
         if (sum(assoc1$BP == idxSNP.bp) == 0) {
@@ -267,10 +315,13 @@ jlim.gencfg <- function () {
             tr2file <- prefix2list[Ign]
             tr2path <- paste(tr2subdir, "/", tr2file, sep="")
 
+            PL("Scanning secondary trait", tr2file)
+
             permfile <- paste(c(eQTL, gene, "mperm.dump.all.gz"), collapse='.')
             permpath <- paste(tr2subdir, "/", permfile, sep='')
             
-            ld2path <- paste(tr2subdir, "/", eQTL, '.ped.gz', sep='')
+            ld2path <- paste(tr2subdir, "/", eQTL, '.', tr2gttype, '.gz',
+                             sep='')
                              
             
             assoc2 <-
@@ -286,13 +337,15 @@ jlim.gencfg <- function () {
                 assoc2 <- assoc2[assoc2$TEST == "ADD", ]
             }
 
-            if ("STAT" %in% colnames(assoc2)) {
+            if ("Z" %in% colnames(assoc2)) {
+                # use provided Z
+            } else if ("STAT" %in% colnames(assoc2)) {
                 assoc2 <- cbind(assoc2, Z=assoc2$STAT)
             } else if ("T" %in% colnames(assoc2)) {
                 assoc2 <- cbind(assoc2, Z=assoc2$T)
             } else {
-                PL("CAN'T FIND STATISTIC", tr2path)
-                ASSERT(FALSE)
+                cat(paste("Cannot find association statistics in", tr2path))
+                q(status=1)
             }
 
             if (sum(assoc2$BP == idxSNP.bp) != 1) {
@@ -302,7 +355,14 @@ jlim.gencfg <- function () {
             minP2 <- min(assoc2$P)
                 
             if (min(assoc2$P) > minP2co) {
+                PL("min{assoc P of secondary trait} is high", min(assoc2$P))
                 next
+            }
+
+            if (sum(duplicated(assoc2$BP)) > 0) {
+                cat(paste("multiple alleles are prohibited at the same BP:",
+                          tr2path))
+                q(status=1)
             }
 
             assoc1.sel <- assoc1$BP[assoc1$P <= 0.01]
@@ -316,6 +376,7 @@ jlim.gencfg <- function () {
             #PL("Markers", length(all.sel))
 
             if (length(all.sel) < 2) {
+                PL("Too few usable markers", length(all.sel))
                 next
             }
 
@@ -327,11 +388,24 @@ jlim.gencfg <- function () {
 
             ASSERT(sum(assoc1$BP != assoc2$BP) == 0)
 
+            refgt <- refgt0[refgt0$POS %in% all.sel, ]
+            
+            ASSERT(sum(assoc1$BP != refgt$POS) == 0)
+             
+            refgt.maf <- calcMAF.refLD.vcf(refgt, rep(TRUE, nrow(refgt)))
+
             # Reassign index SNP
-            best1 <- which.min(assoc1$P)        
+            best1 <- which.max(abs(assoc1$Z))
 
             idx2bp <- assoc1$BP[best1]
             idx2P <- assoc1$P[best1]
+
+            if (refgt.maf[best1] < minMAF) {
+                PL(paste("index SNP ( BP =", idx2bp,
+                         ") is below specified min MAF in Ref LD panel"),
+                   refgt.maf[best1])
+                next
+            }
 
             # Reconfigure analysis window around new index SNP 
             assoc1 <- assoc1[(assoc1$BP >= (idx2bp - WINDOW.SIZE)) & 
@@ -343,6 +417,7 @@ jlim.gencfg <- function () {
             assoc1.endbp <- min(assoc1.endbp, idx2bp + WINDOW.SIZE)
 
             if (nrow(assoc1) < 2) {
+                PL("Too few usable markers", nrow(assoc1))
                 next
             }
             
@@ -356,9 +431,11 @@ jlim.gencfg <- function () {
             minP2 <- min(assoc2$P)
                 
             if (minP2 > minP2co) {
+                PL("min{assoc P of secondary trait} is high", min(assoc2$P))
                 next
             }
-                
+
+            PL("Accept", tr2path)
             
             df.idxsnp <- append(df.idxsnp, idxSNP)
             df.idxchr <- append(df.idxchr, chrom)

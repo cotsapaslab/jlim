@@ -145,7 +145,8 @@ get.dosage.altaf <- function(dosage.file, pheno.file, bpset) {
                           sep="\t")
     dim(dosage1)
     gt1 <- dosage1[, 5:ncol(dosage1)]
-    rownames(gt1) <- dosage1$clone # SNP
+#    rownames(gt1) <- dosage1$clone # SNP
+    rownames(gt1) <- dosage1$Start
     
     # reorder SNPs        
     gt1 <- gt1[dosage1$Start %in% bpset, ]
@@ -169,7 +170,8 @@ load.isLD1.dosage <- function(dosage.file, pheno.file, bpset) {
                           sep="\t")
     dim(dosage1)
     gt1 <- dosage1[, 5:ncol(dosage1)]
-    rownames(gt1) <- dosage1$clone # SNP
+#    rownames(gt1) <- dosage1$clone # SNP
+    rownames(gt1) <- dosage1$Start    
     
     # reorder SNPs        
     gt1 <- gt1[dosage1$Start %in% bpset, ]
@@ -204,7 +206,8 @@ load.isLD1.dosage2 <- function(dosage.file, bpset) {
                           sep="\t")
     dim(dosage1)
     gt1 <- dosage1[, 5:ncol(dosage1)]
-    rownames(gt1) <- dosage1$clone # SNP
+#    rownames(gt1) <- dosage1$clone # SNP
+    rownames(gt1) <- dosage1$Start
     
     gt1 <- gt1[dosage1$Start %in% bpset, ]
     dim(gt1)
