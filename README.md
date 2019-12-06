@@ -9,7 +9,7 @@ Has the added functionality of obtaining association statistics for the secondar
 ## How to install
 
 The core JLIM module is implemented as an R extension (**jlimR**). **jlimR** depends on **getopt** module. If it is not installed, **getopt** can be installed from CRAN by:
-JLIM 2 has an added pre-porcessing step coded in pyhton 2.
+JLIM 2 has an added pre-processing step coded in pyhton 2.
 
 ```
 Rscript -e 'install.packages("getopt", repos="http://cran.r-project.org")' 
