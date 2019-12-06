@@ -53,6 +53,7 @@ Data from three simulated cohorts (A,B,C) in chromosome 1- Bimbam and map files 
 To run the example after JLIM is installed, run all commands in the file CommandsExample.sh:
 
 cd example
+
 ./CommandsExample.sh
 
 ## Files needed to run JLIM
