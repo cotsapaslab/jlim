@@ -1,27 +1,25 @@
 Package: jlimR
-Version: 2.0
-Date: 2019-08-05
+Type: Package
 Title: Joint Likelihood Mapping (JLIM)
+Version: 2.5.0
 Authors@R: c(person("Sung", "Chun", role = c("aut", "cre"),
-	     email = "sung.g.chun@gmail.com"),
-             person("Sebastian", "Akle", role = "aut",
-             email = "sebastian.akle@gmail.com"),
-             person("Shamil", "Sunyaev", role = "aut"),
-             person("Chris", "Cotsapas", role = "aut"))
+	         email = "SungGook.Chun@childrens.harvard.edu"),
+	   person("Sebastian", "Akle", role = "aut",
+           email = "sebastian.akle@gmail.com"),
+           person("Ahmad", "Samiei", role = "aut",
+           email = "ahmad.samiei@childrens.harvard.edu"),
+           person("Shamil", "Sunyaev", role = "aut"),
+           person("Chris", "Cotsapas", role = "aut"))
 Author: Sung Chun [aut, cre],
     Sebastian Akle [aut], 
+    Ahamd Samiei [aut],
     Shamil Sunyaev [aut],
     Chris Cotsapas [aut]
-Maintainer: Sung Chun <sung.g.chun@gmail.com>
-Description: Cross-trait test of shared causal effect described in Chun et al. Nature Genetics 2017.
-    (http://www.nature.com/articles/ng.3795).
+Maintainer: Ahmad Samiei <ahmad.samiei@childrens.harvard.edu>
+Description: Cross-trait test of shared causal effect described in Chun et al.
+    Nat Genet. 2017 Apr;49(4):600-605. doi: 10.1038/ng.3795.
 License: GPL
-Depends:
-    getopt, methods
-Collate:
-    'util.R'
-    'fm.1cv.ver_1h4.R'
-    'jlim.R'
-    'jlim_cmdutil.R'
-    'jlim_gencfg.R'
-RoxygenNote: 5.0.1
+Depends: getopt, arrow, tools, seqminer, dplyr
+Encoding: UTF-8
+LazyData: true
+RoxygenNote: 7.1.1
