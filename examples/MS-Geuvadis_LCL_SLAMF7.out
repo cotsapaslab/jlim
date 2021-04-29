@@ -1,0 +1,2 @@
+userIdxBP	 actualIdxBP	STAT	pvalue	 usedSNPsNo	startBP	endBP	sectrSampleSize	sectrGeneName	executedPerm	desc
+160711804	160711804	3.75229222129719	0	106	160698276	160807409	278	NoGeneName	10000	executed
