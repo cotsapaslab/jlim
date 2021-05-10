@@ -3,25 +3,39 @@
 \docType{class}
 \name{jlim-class}
 \alias{jlim-class}
-\title{jlim class to contain the processed input data and results of JLIM test}
+\title{jlim class to keep the result of JLIM single test}
 \description{
-jlim class to contain the processed input data and results of JLIM test
+jlim class to keep the result of JLIM single test
 }
 \section{Slots}{
 
 \describe{
-\item{\code{assoc1}}{data.frame of trait 1 with markers acutally used}
+\item{\code{userIdxBP}}{user specified index SNP}
 
-\item{\code{assoc2}}{data.frame of trait 2 with markers acutally used}
-
-\item{\code{ld0}}{reference LD of markers actually used}
-
-\item{\code{ld2}}{in-sample LD of trait 2 cohort only with markers actually used}
-
-\item{\code{idx2BP}}{BP position of most associated SNP in assoc1}
+\item{\code{actualIdxBP}}{actual found index SNP}
 
 \item{\code{STAT}}{jlim statistic lambda}
 
-\item{\code{p.value}}{permutation p-value}
+\item{\code{pvalue}}{permutation pvalue}
+
+\item{\code{startBP}}{start position of the tested locus}
+
+\item{\code{endBP}}{end position of the tested locus}
+
+\item{\code{sectrSampleSize}}{end position of the tested locus}
+
+\item{\code{sectrGeneName}}{name of the Gene in case of multiple gene in the second trait}
+
+\item{\code{sectrIndSNPpvalue}}{pvalue of the indexSNP in the second trait.}
+
+\item{\code{sectrMinpvalue}}{minimum pvalue of in the second trait.}
+
+\item{\code{sectrSNPWithMinpvalue}}{SNP with the minimum pvalue in the second trait}
+
+\item{\code{desc}}{status of the JLIM test}
+
+\item{\code{executedPerm}}{number of the executed permutations}
+
+\item{\code{permmat}}{the permutation matrix used for the JLIM test}
 }}
 

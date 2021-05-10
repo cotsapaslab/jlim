@@ -4,29 +4,85 @@
 \alias{jlim.test}
 \title{Run Joint Likelihood Mapping (JLIM) test}
 \usage{
-jlim.test(maintr.file, sectr.file, refld.file, secld.file, perm.file, start,
-  end, r2res = 0.8, mainld.file = NULL)
+jlim.test(
+  maintr.file,
+  sectr.file,
+  refld.file = NULL,
+  secld.file = NULL,
+  perm.file,
+  CHR,
+  start.bp,
+  end.bp,
+  r2res = 0.8,
+  withPerm = FALSE,
+  perm.count,
+  sectr.gene.filter = FALSE,
+  geneName,
+  indSNP,
+  maintr.col.names,
+  sectr.col.names,
+  resultFileName,
+  sectr.sample.size,
+  min.SNPs.count,
+  sectr.ref.db,
+  min.MAF,
+  min.pvalue,
+  mainld.file = NULL,
+  mainld.ldmatrix = FALSE,
+  rda.file = NULL,
+  rda.pvalue,
+  recessive.model = FALSE
+)
 }
 \arguments{
 \item{maintr.file}{main trait association summary statistics file}
 
 \item{sectr.file}{secondary trait association summary statistics file}
 
-\item{refld.file}{file of reference LD panel}
+\item{refld.file}{reference LD panel file}
 
-\item{secld.file}{genotype file of secondary trait cohort to gather
-in-sample LD}
+\item{secld.file}{genotype file of secondary trait cohort to gather in-sample LD}
 
 \item{perm.file}{permutation file for secondary trait association}
 
-\item{start}{position at the start of analysis window (bp)}
-
-\item{end}{position at the end of analysis window (bp)}
-
 \item{r2res}{r2 resolution limit of JLIM analysis (default r2=0.8)}
 
-\item{mainld.file}{genotype file of main trait cohort to gather
-in-sample LD if provided. This is not needed in general.}
+\item{perm.count}{Number of permutation in case of on-the-fly permutation}
+
+\item{sectr.gene.filter}{in case, second trait's association file contains data from multiple
+genes, this parameter specifies that if jlim.test should be ran for all of the genes or not. (default=FALSE)}
+
+\item{geneName}{which gene out of all genes in the second association file should be tested}
+
+\item{indSNP}{base pair position of the index SNP}
+
+\item{maintr.col.names}{a matrix containing list of column names of the main association file to be renamed/replaced
+CHR <-- "existing name",  BP <-- "existing name",  P <-- "existing name"}
+
+\item{sectr.col.names}{a matrix containing list of column names of the second association file to be renamed/replaced
+CHR <-- "existing name",  BP <-- "existing name",  P <-- "existing name" Gene <-- "existing name", VarinatId <-- "existing name"}
+
+\item{resultFileName}{output file name}
+
+\item{sectr.sample.size}{second traits sample size in case of on the fly permutation}
+
+\item{min.SNPs.count}{minimum number of the common SNPs in the main and second traits to run JLIM test minimum number of the common SNPs in the main and second traits to run JLIM test (recommended 50)..}
+
+\item{min.MAF}{minimum value of minor allele frequency for the second traits and reference panel(default 0.05)}
+
+\item{min.pvalue}{threshold for minimum second trait association pvalue to run the analysis (default 0.05)}
+
+\item{mainld.file}{genotype/ldmatix file of main trait cohort to gather in-sample LD}
+
+\item{mainld.ldmatrix}{type of the mainld.file parameter,TRUE=ldmatrix FALSE=genotype}
+
+\item{rda.file}{path and prefix of the file name to save JLIM objects in the rda files}
+
+\item{rda.pvalue}{minimum required pvalue of the JLIM result in order to save the data objects into the output files}
+
+\item{start}{start position of the analysis window (bp)}
+
+\item{end}{end position of the analysis window (bp)}
 }
 \value{
 jlim class object
@@ -36,4 +92,3 @@ JLIM tests whether two traits - main and secondary - are driven by shared
 causal effect or not. The method is described in Chun et al. (
 http://biorxiv.org/content/early/2016/05/12/053165)
 }
-

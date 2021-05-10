@@ -135,11 +135,12 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     assoc1_b <- mainld.res[[2]]
 
     if(nrow(ld1_b)!=nrow(assoc1_b)){
-      cat("\nNumber of SNPs in the main trait and main ld does not match.")
+      cat("\nNumber of SNPs in the main trait and main ld does not match.\n")
       stop(0)
     }
     assoc1_b.org <-  assoc1_b
-  }
+
+ }
 
   assoc2.genes.res <- loadSecondTraitsSumStats(sectr.file, remDupBP=FALSE, CHR, start.bp, end.bp,
                                                col.names=sectr.col.names, sectr.ref.db = sectr.ref.db,
@@ -172,7 +173,7 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     ld0.res <- processRefLD ( refld.file, assoc1_b, assoc2, refgt.org )
     ld0.org <- ld0.res[[1]]
     refgt0.org <- ld0.res[[2]]
-  }else{
+  }else{  ## has to be a separated if after removing the possoble duplicates
     refgt.org <-ld2.gtInfo # gt + info
     refgt0.org <- ld2.gt # only gt
     ld0.org <- ld2_b
@@ -188,6 +189,14 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
 #    ld0.maf.org <- recess.res[[5]]
 #    recessive.BP <- recess.res[[6]]
 #  }
+
+#### add remove duplicates here
+  if(!exists("ld1_b"))
+    ld1_b <- NULL
+
+    mainTrait.Res <- remDuplicateBPMainTrait( assoc=assoc1_b , ld=ld1_b , assocFile=maintr.file)
+    assoc1_b <- mainTrait.Res[[1]]
+    ld1_b <- mainTrait.Res[[2]]
 
   Gene.list <-  unique(assoc2.genes$Gene)
   resCounter <- 1
@@ -225,7 +234,7 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
 #    if (recessive.model && length(recessive.BP) >= 1){
 #      sectr.recess.SNPs <- assoc2[assoc2$BP %in%  recessive.BP,]
 #      sectr.recess.SNPs$BP <- sectr.recess.SNPs$BP +.1
-#      assoc2 <- rbind.data.frame(sectr.recess.SNPs,assoc2)
+#      assoc2 <- rbind.data.frame(sectr.recess.SNPs,assoc2, stringsAsFactors=FALSE)
 #      assoc2 <- assoc2[order(assoc2$BP), ]
 #    }
     assoc2 <- remDuplicateBP(assoc2, sectr.file)
@@ -237,7 +246,6 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
       next
     }
 
-    if(!exists("ld1_b"))  ld1_b <- NULL
     if(!exists("ld2_b"))  ld2_b <- NULL
     if(!exists("mainld.ldmatrix"))  mainld.ldmatrix <- NULL
 
@@ -341,8 +349,7 @@ colNamesUpdate<- function(fileName, data, col.names){
           colnames(data)[colnames(data)==col.names[l,2]] <- col.names[l,1]
 
         }else{
-          cat ("\nColumn with the name: ", col.names[l,2], "does not exist in file", fileName)
-          # stop the execution if  the given colname not found
+          cat ("\nColumn with the name: ", col.names[l,2], "does not exist in file", fileName,"\n")
           stop()
         }
       }
@@ -383,14 +390,38 @@ readTraitStat <- function(fileName, CHR, col.names){
                   ": check for potential numerical underflow"))
       }
     } else {
-      cat(paste("\nCannot find association statistics in:", fileName))
+      cat(paste("\nCannot find association statistics in:", fileName),"\n")
       stop()
     }
   }else{
-    cat(paste("\nCannot find BP or CHR in the input file: ", fileName))
+    cat(paste("\nCannot find BP or CHR in the input file: ", fileName),"\n")
     stop()
   }
   return(assoc)
+}
+
+remDuplicateBPMainTrait <-  function(assoc, ld, assocFile){
+
+  if (sum(is.na(assoc$P)) > 0) {
+    cat("\nNumber of NA P_values:", sum(is.na(assoc$P)),"in", assocFile ,"has been removed.")
+    if(!is.null(ld))
+        ld <- ld[!is.na(assoc$P), !is.na(assoc$P)]
+    assoc <- assoc[!is.na(assoc$P), ]
+  }
+
+  if (sum(duplicated(assoc$BP)) > 0) {
+    cat(paste("\nMultiple alleles are prohibited at the same BP:", assocFile))
+
+    BP_frqs <- data.frame(table(assoc$BP))
+    duplicate_BP <- BP_frqs[BP_frqs$Freq > 1,1]
+    if(!is.null(ld))
+         ld <- ld[!(assoc$BP %in% duplicate_BP), !(assoc$BP %in% duplicate_BP)]
+    assoc <- assoc[ !(assoc$BP %in% duplicate_BP) ,]
+    cat("\n",length(duplicate_BP)," SNP's at positions ", duplicate_BP,"has been removed.")
+  }
+  outputlist <- list(assoc, ld)
+  return(outputlist)
+
 }
 
 remDuplicateBP <-  function(assoc ,fileName){
@@ -422,7 +453,10 @@ loadTraitsSumStatsParquet<- function(fileName, CHR, start.bp, end.bp, col.names)
   }
 
   assoc <- read_parquet(fileName, as_tibble = TRUE)
-
+  if(ncol(assoc)==0){
+    cat("\nNumber of the fetched variants from GTEx data source is Zero.\n")
+    q(status=1)
+  }
   if(length(col.names)==0)
     col.names <- matrix(c("P","variantId","Gene",
                           "pval_nominal","variant_id","phenotype_id"),
@@ -432,7 +466,7 @@ loadTraitsSumStatsParquet<- function(fileName, CHR, start.bp, end.bp, col.names)
 
   if(sum(colnames(assoc)=="variantId")==1){
     BP <- sapply(assoc$variantId, function(x) substring(x,gregexpr(pattern ='_',x)[[1]][1]+1,gregexpr(pattern ='_',x)[[1]][2]-1))
-    assoc <- cbind.data.frame(BP=as.numeric(BP), assoc)
+    assoc <- cbind.data.frame(BP=as.numeric(BP), assoc, stringsAsFactors=FALSE)
   }
   assoc <- assoc[assoc$BP >= start.bp & assoc$BP<= end.bp, ]
 
@@ -440,7 +474,7 @@ loadTraitsSumStatsParquet<- function(fileName, CHR, start.bp, end.bp, col.names)
     CHR <- sapply(assoc$variantId, function(x) substring(x,1,gregexpr(pattern ='_',x)[[1]][1]-1))
     ref <- sapply(assoc$variantId, function(x) substring(x,gregexpr(pattern ='_',x)[[1]][2]+1,gregexpr(pattern ='_',x)[[1]][3]-1))
     alt <- sapply(assoc$variantId, function(x) substring(x,gregexpr(pattern ='_',x)[[1]][3]+1,gregexpr(pattern ='_',x)[[1]][4]-1))
-    assoc <- cbind.data.frame ( CHR, ref, alt, assoc)
+    assoc <- cbind.data.frame ( CHR, ref, alt, assoc, stringsAsFactors=FALSE)
   }
   assoc <- assoc[assoc$CHR ==CHR, ]
   assoc <- assoc [!is.na(assoc$P),]
@@ -464,7 +498,7 @@ loadTraitsSumStatsParquet<- function(fileName, CHR, start.bp, end.bp, col.names)
       assoc <- assoc[!is.na(assoc$P), ]
     }
   } else {
-    cat(paste("\nCannot find association statistics in", fileName))
+    cat(paste("\nCannot find association statistics in", fileName),"\n")
     stop()
   }
 
@@ -494,6 +528,15 @@ eQTLCatalogueExtract <- function(fileName, region,col.names){
   cat("\nWorking dirctory: ",getwd())
   #Fetch summary statistics with seqminer
   fetch_table = seqminer::tabix.read.table(tabixFile = fileName, tabixRange = region, stringsAsFactors = FALSE)
+  if (exists("fetch_table") ){
+    if( nrow(fetch_table)==0){
+      cat("\nNumber of the fetched SNPs from eQTLCaltalogue for the input region: ",region," is Zero.\n")
+      q(status=1)
+    }
+  }else{
+    cat("\nCould not fetch any data from eQTLCaltalogue check the connection!\n")
+    q(status=1)
+  }
 
   if(all(grepl(pattern = "^http://", fileName) | grepl(pattern = "^ftp://", fileName) )){
     column_names = colnames(readr::read_tsv(fileName, n_max = 1))
@@ -529,11 +572,11 @@ loadMainTraitsSumStats<- function(fileName, remDupBP=TRUE, CHR,
   if(nrow(assoc)!=0)
     rownames(assoc) <- 1:nrow(assoc)
   else{
-    cat("\nNumber of the related SNPs is zero in file: ", fileName)
+    cat("\nNumber of the related SNPs is zero in file: ", fileName,"\n")
     stop()
   }
   if(nrow(assoc[assoc$BP == indSNP,])<1 ){
-    cat("\nIndex SNP is missing in the main trait.")
+    cat("\nIndex SNP is missing in the main trait.\n")
     stop()
   }
   assoc.org <- assoc
@@ -569,7 +612,7 @@ loadSecondTraitsSumStats<- function(fileName, remDupBP=TRUE, CHR, start.bp, end.
   if(nrow(assoc)!=0)
     rownames(assoc) <- 1:nrow(assoc)
   else{
-    cat("\nNumber of the related SNPs is zero in file: ", fileName )
+    cat("\nNumber of the related SNPs is zero in file: ", fileName,"\n")
     stop()
   }
 
@@ -579,7 +622,8 @@ loadSecondTraitsSumStats<- function(fileName, remDupBP=TRUE, CHR, start.bp, end.
   }
 
   if(!c("Gene") %in% names(assoc))
-    assoc <- cbind.data.frame(assoc, Gene=rep("NoGeneName",nrow(assoc)))
+    assoc <- cbind.data.frame(assoc, Gene=rep("NoGeneName",nrow(assoc)),
+                              stringsAsFactors=FALSE)
 
   assoc.org <- assoc
 
@@ -679,13 +723,13 @@ SNPselction <- function( assoc1, assoc2, ld1, ld2, ld0.maf, permmat, r2res,
 
     if (sum(ld0.maf.t == 0) > 0) {
       cat(paste("\nMonomorphic SNPs in ref LD matrix:", refld.file, ": BP=",
-                paste(names(ld0.maf.t)[ld0.maf.t == 0], collapse=", ")))
+                paste(names(ld0.maf.t)[ld0.maf.t == 0], collapse=", ")),"\n")
       stop()
     }
   }
 
   if (sum(is.na(ld1.t)) > 0) {
-    cat(paste("\nNA or monomorphic SNP in ref LD matrix:", refld.file))
+    cat(paste("\nNA or monomorphic SNP in ref LD matrix:", refld.file),"\n")
     stop()
   }
   best1 <- which.max(abs(assoc1.t$Z))
@@ -756,7 +800,7 @@ loadMainLD<- function( file, assoc, ldmatrix, start.bp, end.bp){
     catE(paste("\nMain ld file is a ld-matrix. "))
     ld  <- read.delim(file=file, header=FALSE, sep="\t", stringsAsFactors=FALSE)
     if( !(nrow(ld) == nrow(assoc) )){
-      cat("\nNumber of the SNPs in main trait and its ld matrix does not match.")
+      cat("\nNumber of the SNPs in main trait and its ld matrix does not match.\n")
       stop(0)
     }else
       colnames(ld) <- assoc$BP
@@ -805,7 +849,8 @@ loadMainLD<- function( file, assoc, ldmatrix, start.bp, end.bp){
       PL("\nERROR: Unsupported mainld ", file)
       ASSERT(FALSE)
     }
-    if (((length(grep("dosage.txt$", file)) == 0) &&  (length(grep("dosage.txt.gz$", file)) == 0) && (length(grep("dosage.gz$", file)) == 0))){
+    if (((length(grep("dosage.txt$", file)) == 0) &&
+         (length(grep("dosage.txt.gz$", file)) == 0) && (length(grep("dosage.gz$", file)) == 0))){
 
       if (sum(duplicated(ld$POS)) > 0) {
         dup.POS <- ld$POS[duplicated(ld$POS)]
@@ -879,7 +924,7 @@ loadSecondLD<- function( file, assoc, assoc.org, start.bp, end.bp){
   }
   if (((length(grep("dosage.txt$", file)) == 0) &&  (length(grep("dosage.txt.gz$", file)) == 0) && (length(grep("dosage.gz$", file)) == 0))){
     if(nrow(ld)!=nrow(assoc)){
-      cat("\nNumber of SNPs in the second traits and reference panels does not match.")
+      cat("\nNumber of SNPs in the second traits and reference panels does not match.\n")
       stop()
     }
 
@@ -916,8 +961,8 @@ matchMarkers<- function( assoc1, assoc2,  start.bp, end.bp, withPerm,
                          ld0, ld1, ld2, ld0.maf,
                          mainld.ldmatrix, refgt=NULL, permmat){
 
-  catE (paste("\nBefore SNP matching #sample/SNPs in first trait:",dim(assoc1)," second trait:",dim(assoc2),
-              " ref panel:",dim(refgt)," start bp:", start.bp," end bp:", end.bp," offline perm:", withPerm))
+  catE (paste("\nBefore SNP matching #sample/SNPs in first trait:",nrow(assoc1)," second trait:",nrow(assoc2),
+              " ref panel:",nrow(refgt)," start bp:", start.bp," end bp:", end.bp," offline perm:", withPerm))
 
   refgt_b <- refgt ; assoc1_b <- assoc1 ; assoc2_b <- assoc2
   refgt <- refgt[refgt$POS >= start.bp & refgt$POS <= end.bp, ]
@@ -928,7 +973,7 @@ matchMarkers<- function( assoc1, assoc2,  start.bp, end.bp, withPerm,
     if(ncol(permmat) == nrow(assoc2_b)){
       permmat <- permmat[, assoc2_b$BP >= start.bp & assoc2_b$BP <= end.bp]
     }else{
-      cat("\nNumber of SNPs in the second trait and permutaion data is not equal.")
+      cat("\nNumber of SNPs in the second trait and permutaion data is not equal.\n")
       stop(0)
     }
   }
@@ -958,7 +1003,6 @@ matchMarkers<- function( assoc1, assoc2,  start.bp, end.bp, withPerm,
   }
   if(!is.null(ld1)){
     ld1 <- ld1[colnames(ld1) %in% assoc1$BP, colnames(ld1) %in% assoc1$BP]
-    #   ld1 <- ld1[assoc1_b$BP  %in% assoc1$BP, assoc1_b$BP  %in% assoc1$BP ]
   }
 
   if(!is.null(ld2)){
@@ -985,8 +1029,8 @@ matchMarkers<- function( assoc1, assoc2,  start.bp, end.bp, withPerm,
 
    reslist <-  list(assoc1, assoc2,refgt, ld1,ld2, ld0.maf,  permmat)
 
-  catE(paste("After SNP Matching #sample/SNPs in first trait:",dim(assoc1)," second trait:",dim(assoc2),
-             " ref panel:",dim(refgt)," start bp:", start.bp," end bp:", end.bp," offline perm:", withPerm))
+  catE(paste("After SNP Matching #sample/SNPs in first trait:",nrow(assoc1)," second trait:",nrow(assoc2),
+             " ref panel:",nrow(refgt)," start bp:", start.bp," end bp:", end.bp," offline perm:", withPerm))
 
   return( reslist )
 
@@ -1113,7 +1157,7 @@ loadRefLD<- function(refld.file, assoc1, start.bp, end.bp, assoc2.genes.org,
     refgt <- as.data.frame(refgt)
 
     if(nrow(refgt)!=nrow(assoc2.genes)){
-      cat("\nNumber of SNPs in the second traits and reference panels does not match.")
+      cat("\nNumber of SNPs in the second traits and reference panels does not match.\n")
       stop()
     }
     refgt <- cbind( CHROM="", POS=as.numeric(assoc2.genes$BP), REF="", ALT="",refgt)
@@ -1143,8 +1187,8 @@ loadRefLD<- function(refld.file, assoc1, start.bp, end.bp, assoc2.genes.org,
   refgt <- refgt[refgt$POS %in% assoc1$BP,]
 
   if(nrow(refgt[refgt$POS == indSNP,])<1 ){
-    cat("\nIndex SNP is missing in the reference panel file.")
-    stop()
+    cat("\nIndex SNP is missing in the reference panel file.\n")
+    q(status=1)
   }
 
   # filter rare variant from refLD
@@ -1287,18 +1331,18 @@ recessive.BP.update <- function (assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.m
 
     refgt0.org.recess.SNPs <- refgt0.org[refgt.org$POS %in%  recessive.BP,]
     rownames(refgt0.org.recess.SNPs) <- paste(rownames(refgt0.org.recess.SNPs), ".1", sep = "")
-    refgt0.org <- rbind.data.frame(refgt0.org.recess.SNPs,refgt0.org)
+    refgt0.org <- rbind.data.frame(refgt0.org.recess.SNPs,refgt0.org, stringsAsFactors=FALSE)
     refgt0.org <- refgt0.org[order(refgt.new.POS), ]
 
     ld0.maf.org <-c(ld0.maf.org,ld0.maf.org[refgt.org$POS %in%  recessive.BP])
     ld0.maf.org <- ld0.maf.org[order(refgt.new.POS)]
-    ld0.org <-cbind.data.frame(ld0.org, ld0.org[,refgt.org$POS %in%  recessive.BP])
-    ld0.org <-rbind.data.frame(ld0.org, ld0.org[refgt.org$POS %in%  recessive.BP,])
+    ld0.org <-cbind.data.frame(ld0.org, ld0.org[,refgt.org$POS %in%  recessive.BP], stringsAsFactors=FALSE)
+    ld0.org <-rbind.data.frame(ld0.org, ld0.org[refgt.org$POS %in%  recessive.BP,], stringsAsFactors=FALSE)
 
     ld0.org <- ld0.org[order(refgt.new.POS), ]
     ld0.org <- ld0.org[,order(refgt.new.POS) ]
 
-    refgt.org <- rbind.data.frame(refgt.org.recess.SNPs,refgt.org)
+    refgt.org <- rbind.data.frame(refgt.org.recess.SNPs,refgt.org, stringsAsFactors=FALSE)
     refgt.org <- refgt.org[order(refgt.org$POS), ]
   }
   reslist <-  list(assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org, recessive.BP)

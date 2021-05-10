@@ -5,14 +5,14 @@ catE<- function(input) {
 
 fileExists<- function(fileName) {
   if (!file.exists(fileName) ){
-    cat(paste("\nFile does not exist:", fileName))
+    cat(paste("\nFile does not exist:", fileName),"\n")
     q(status=1)
   }
 }
 
 ASSERT <- function(test) {
     if (!test) {
-        stop(paste("ASSERT fail:", deparse(substitute(test))))
+        stop(paste("ASSERT fail:", deparse(substitute(test))),"\n")
     }
 }
 

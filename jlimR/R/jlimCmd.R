@@ -106,14 +106,14 @@ run.jlim <-  function() {
   args <- commandArgs(TRUE)
 
   if (length(args) <= 1) {
-    cat("\n",getopt(spec, usage=TRUE, command="run.jlim() "))
+    cat("\n",getopt(spec, usage=TRUE, command="run.jlim() "),"\n")
     q(status=1)
   }
   args <- args[2:length(args)]
   opt <- getopt(spec, opt=args)
 
   if ( !is.null(opt$help) ) {
-    cat ("\nLook at the following link for the details: https://github.com/cotsapaslab/jlim/tree/2.0.1")
+    cat ("\nLook at the following link for the details: https://github.com/cotsapaslab/jlim\n")
     q(status=1)
   }
 
@@ -203,7 +203,7 @@ run.jlim <-  function() {
   } else{
     ref.LD <- opt[["ref-ld"]]
     if (is.na(file.info(ref.LD)$isdir)) {
-      cat(paste("\nFile or directory does not exist:", ref.LD))
+      cat(paste("\nFile or directory does not exist:", ref.LD),"\n")
       q(status=1)
     }else if (!file.info(ref.LD)$isdir) {
       refld.file <- ref.LD
@@ -218,22 +218,20 @@ run.jlim <-  function() {
     sectr.ref.db <-opt[["sectr-ref-db"]]
     cat ("\nSecond trait is extracted from data source: ", sectr.ref.db)
     sectr.ref.db <-tolower( sectr.ref.db )
-
-    if(sectr.ref.db %in%c("gtex.v8.eur","eqtlcatalogue:remote","eqtlcatalogue")){
-      if(sectr.ref.db!="eqtlcatalogue"){
+    sectrRefType <- c("GTEx.V8.EUR", "eQTLCatalogue","eQTLCatalogue:remote")
+    if(sectr.ref.db %in% tolower(sectrRefType)){
         sectr.res <- sectr.sample.size.lookup(sectr.file ,sectr.ref.db, sectr.sample.size)
         sectr.file <-  sectr.res[[2]]
         if(is.null(sectr.sample.size))
           sectr.sample.size <-  sectr.res[[1]]
-      }
     }else{
-      cat("\n--sectr-ref-db options should be one of the following data sources (case-insensitive): GTEx.V8.EUR, eQTLCatalogue or eQTLCatalogue:remote.")
+      cat("\n--sectr-ref-db option should be one of the following data sources (case-insensitive): ",sectrRefType ,"\n")
       q(status=1)
     }
   }else
-    sectr.ref.db<-c()
+    sectr.ref.db<-c("")
 
-#### if on the fly permutation is requested
+# on the fly permutation is requested
 if (is.null(opt[["perm-file"]])){
     secld.file <-NULL
     withPermFile <- FALSE
@@ -257,6 +255,8 @@ if (is.null(opt[["perm-file"]])){
   if( !is.null(maintr.file))  fileExists(maintr.file)
   if(!is.null(sectr.file) && !all(grepl(pattern = "^http://", sectr.file) || grepl(pattern = "^ftp://", sectr.file) ))
     fileExists(sectr.file)
+  if (length(sectr.ref.db)!=0 &&sectr.ref.db =="eqtlcatalogue")
+    fileExists(paste(sectr.file,".tbi",sep = ""))
 
   if( withPermFile) fileExists(perm.file)
   if( !is.null(secld.file)) fileExists(secld.file)
@@ -424,96 +424,161 @@ if (is.null(opt[["perm-file"]])){
 
 # fetch the sample size for eqtlcatalogue from the ftp sever and also GTEx as it is hard-coded
 sectr.sample.size.lookup <-function( sectr.file ,sectr.ref.db, sectr.sample.size ) {
+  switch(sectr.ref.db,
+         "eqtlcatalogue:remote"={
+           tabix_paths = read.delim(
+             "https://raw.githubusercontent.com/eQTL-Catalogue/eQTL-Catalogue-resources/master/tabix/tabix_ftp_paths.tsv",
+             sep = "\t", header = TRUE, stringsAsFactors = FALSE)
+           tabix_paths <- tabix_paths[tabix_paths$quant_method=="ge",]
 
-  if (tolower(sectr.ref.db) =="eqtlcatalogue:remote"){
-    tabix_paths = read.delim(
-      "https://raw.githubusercontent.com/eQTL-Catalogue/eQTL-Catalogue-resources/master/tabix/tabix_ftp_paths.tsv",
-      sep = "\t", header = TRUE, stringsAsFactors = FALSE)
-    tabix_paths <- tabix_paths[tabix_paths$quant_method=="ge",]
+           tissueNames <- sapply(tabix_paths$ftp_path, function(x) substring(x,regexpr("\\/[^\\/]*$",x) +1,gregexpr(pattern ='.all.tsv.gz',x)[[1]][1]-1))
 
-    tissueNames <- sapply(tabix_paths$ftp_path, function(x) substring(x,regexpr("\\/[^\\/]*$",x) +1,gregexpr(pattern ='.all.tsv.gz',x)[[1]][1]-1))
+           tabix_paths <-  cbind.data.frame(tabix_paths, name=tolower(tissueNames))
+           rownames(tabix_paths) <- NULL
 
-    tabix_paths <-  cbind.data.frame(tabix_paths, name=tolower(tissueNames))
-    rownames(tabix_paths) <- NULL
+           if(sum(tabix_paths$name == tolower(sectr.file))==1){
+             sectr.sample.size <- tabix_paths$sample_size[tabix_paths$name == tolower(sectr.file)]
+             sectr.file <- tabix_paths$ftp_path[tabix_paths$name == tolower(sectr.file)]
+             cat ("\nSecond trait sample size fetched from online eQTLCatalogue: ", sectr.sample.size)
+             cat ("\nSecond trait ftp path fetched from online eQTLCatalogue: ", sectr.file)
+           }else{
+             cat ("\nThe second trait input file name does not match any entry in the eqtlcatalogue.\n")
+             q(status=1)
+           }
+           sectr.sample.size},
 
-    if(sum(tabix_paths$name == tolower(sectr.file))==1){
-      sectr.sample.size <- tabix_paths$sample_size[tabix_paths$name == tolower(sectr.file)]
-      sectr.file <- tabix_paths$ftp_path[tabix_paths$name == tolower(sectr.file)]
-      cat ("\nSecond trait sample size fetched from online eQTLCatalogue: ", sectr.sample.size)
-      cat ("\nSecond trait ftp path fetched from online eQTLCatalogue: ", sectr.file)
-    }else{
-      cat ("\nThe input file name does not match any entry in the eqtlcatalogue.")
-      q(status=1)
-    }
-  }
-  if (sectr.ref.db %in%c("gtex.v8.eur")){
-    gtex.sample.size <- readr::read_delim(
-      '  tissue                 |   sample_size
-       # ----------------------------
-      Adipose_Subcutaneous      |   479
-      Adipose_Visceral_Omentum  |   393
-      Adrenal_Gland             |   194
-      Artery_Aorta              |   329
-      Artery_Coronary           |   175
-      Artery_Tibial	            | 476
-      Brain_Amygdala	          | 119
-      Brain_Anterior_cingulate_cortex_BA24	| 135
-      Brain_Caudate_basal_ganglia	| 172
-      Brain_Cerebellar_Hemisphere	| 157
-      Brain_Cerebellum	          | 188
-      Brain_Cortex	              | 183
-      Brain_Frontal_Cortex_BA9  	| 157
-      Brain_Hippocampus	          | 150
-      Brain_Hypothalamus	        | 156
-      Brain_Nucleus_accumbens_basal_ganglia	| 181
-      Brain_Putamen_basal_ganglia	          | 153
-      Brain_Spinal_cord_cervical_c-1      	| 115
-      Brain_Substantia_nigra	              | 100
-      Breast_Mammary_Tissue               	| 329
-      Cells_Cultured_fibroblasts	          | 403
-      Cells_EBV-transformed_lymphocytes     | 113
-      Colon_Sigmoid	            | 266
-      Colon_Transverse	        | 294
-      Esophagus_Gastroesophageal_Junction	  | 275
-      Esophagus_Mucosa	        | 411
-      Esophagus_Muscularis	    | 385
-      Heart_Atrial_Appendage  	| 316
-      Heart_Left_Ventricle	    | 327
-      Kidney_Cortex	            | 65
-      Liver	                    | 178
-      Lung                    	| 436
-      Minor_Salivary_Gland	    | 114
-      Muscle_Skeletal	          | 588
-      Nerve_Tibial	            | 438
-      Ovary   	  | 138
-      Pancreas	  | 243
-      Pituitary	  | 219
-      Prostate	  | 181
-      Skin_Not_Sun_Exposed_Suprapubic	| 430
-      Skin_Sun_Exposed_Lower_leg	    | 508
-      Small_Intestine_Terminal_Ileum	| 141
-      Spleen	    | 179
-      Stomach	    | 260
-      Testis	    | 272
-      Thyroid	    | 482
-      Uterus      | 107
-      Vagina	    | 120
-      Whole_Blood	| 558',
-      trim_ws = TRUE, comment="#", delim="|")
+         "gtex.v8.eur"={
+           gtex.sample.size <- readr::read_delim(
+             '  tissue                 |   sample_size
+             # ----------------------------
+            Adipose_Subcutaneous      |   479
+            Adipose_Visceral_Omentum  |   393
+            Adrenal_Gland             |   194
+            Artery_Aorta              |   329
+            Artery_Coronary           |   175
+            Artery_Tibial	            | 476
+            Brain_Amygdala	          | 119
+            Brain_Anterior_cingulate_cortex_BA24	| 135
+            Brain_Caudate_basal_ganglia	| 172
+            Brain_Cerebellar_Hemisphere	| 157
+            Brain_Cerebellum	          | 188
+            Brain_Cortex	              | 183
+            Brain_Frontal_Cortex_BA9  	| 157
+            Brain_Hippocampus	          | 150
+            Brain_Hypothalamus	        | 156
+            Brain_Nucleus_accumbens_basal_ganglia	| 181
+            Brain_Putamen_basal_ganglia	          | 153
+            Brain_Spinal_cord_cervical_c-1      	| 115
+            Brain_Substantia_nigra	              | 100
+            Breast_Mammary_Tissue               	| 329
+            Cells_Cultured_fibroblasts	          | 403
+            Cells_EBV-transformed_lymphocytes     | 113
+            Colon_Sigmoid	            | 266
+            Colon_Transverse	        | 294
+            Esophagus_Gastroesophageal_Junction	  | 275
+            Esophagus_Mucosa	        | 411
+            Esophagus_Muscularis	    | 385
+            Heart_Atrial_Appendage  	| 316
+            Heart_Left_Ventricle	    | 327
+            Kidney_Cortex	            | 65
+            Liver	                    | 178
+            Lung                    	| 436
+            Minor_Salivary_Gland	    | 114
+            Muscle_Skeletal	          | 588
+            Nerve_Tibial	            | 438
+            Ovary   	  | 138
+            Pancreas	  | 243
+            Pituitary	  | 219
+            Prostate	  | 181
+            Skin_Not_Sun_Exposed_Suprapubic	| 430
+            Skin_Sun_Exposed_Lower_leg	    | 508
+            Small_Intestine_Terminal_Ileum	| 141
+            Spleen	    | 179
+            Stomach	    | 260
+            Testis	    | 272
+            Thyroid	    | 482
+            Uterus      | 107
+            Vagina	    | 120
+            Whole_Blood	| 558',
+             trim_ws = TRUE, comment="#", delim="|")
 
-    gtex.sample.size$tissue <- tolower(gtex.sample.size$tissue)
-    tissueName <- tolower(substring(sectr.file,regexpr("all_associations_",sectr.file)+17,
-                                    gregexpr(pattern ='.v8.EUR.allpairs',sectr.file)[[1]][1]-1))
-    if(sum(gtex.sample.size$tissue == tissueName)==1){
-      sectr.sample.size <- gtex.sample.size$sample_size [gtex.sample.size$tissue == tissueName]
-      cat ("\nSecond trait sample size for the associated GTEx.V8.EUR is: ",sectr.sample.size)
-    }else if(is.null(sectr.sample.size)){
-      cat ("\nSecond trait sample size is missing.")
-      cat ("\nThe input file name does not match any entry in the GTEx.V8.EUR")
-      q(status=1)
-    }
+           gtex.sample.size$tissue <- tolower(gtex.sample.size$tissue)
+           tissueName <- tolower(substring(sectr.file,regexpr("all_associations_",sectr.file)+17,
+                                           gregexpr(pattern ='.v8.EUR.allpairs',sectr.file)[[1]][1]-1))
+           if(sum(gtex.sample.size$tissue == tissueName)==1){
+             sectr.sample.size <- gtex.sample.size$sample_size [gtex.sample.size$tissue == tissueName]
+             cat ("\nSecond trait sample size for the GTEx.V8.EUR input file is: ",sectr.sample.size)
+           }else if(is.null(sectr.sample.size)){
+             cat ("\nSecond trait sample size is missing.")
+             cat ("\nThe second trait input file does not match any entry in the GTEx.V8.EUR.\n")
+             q(status=1)
+           }
+           sectr.sample.size},
 
-  }
+         "eqtlcatalogue"={
+           eqtl.sample.size <- readr::read_delim(
+             '  fileName                 |   sample_size
+             # ----------------------------
+            Alasoo_2018_ge_macrophage_naive.all.tsv.gz	|	84
+            Alasoo_2018_ge_macrophage_IFNg.all.tsv.gz	|	84
+            Alasoo_2018_ge_macrophage_Salmonella.all.tsv.gz	|	84
+            Alasoo_2018_ge_macrophage_IFNg+Salmonella.all.tsv.gz	|	84
+            BLUEPRINT_ge_monocyte.all.tsv.gz	|	191
+            BLUEPRINT_ge_neutrophil.all.tsv.gz	|	196
+            BLUEPRINT_ge_T-cell.all.tsv.gz	|	167
+            BrainSeq_ge_brain.all.tsv.gz	|	479
+            GENCORD_ge_LCL.all.tsv.gz	|	190
+            GENCORD_ge_fibroblast.all.tsv.gz	|	186
+            GENCORD_ge_T-cell.all.tsv.gz	|	184
+            GEUVADIS_ge_LCL.all.tsv.gz	|	445
+            HipSci_ge_iPSC.all.tsv.gz	|	322
+            Lepik_2017_ge_blood.all.tsv.gz	|	471
+            Nedelec_2016_ge_macrophage_Listeria.all.tsv.gz	|	163
+            Nedelec_2016_ge_macrophage_naive.all.tsv.gz	|	163
+            Nedelec_2016_ge_macrophage_Salmonella.all.tsv.gz	|	167
+            Quach_2016_ge_monocyte_naive.all.tsv.gz	|	200
+            Quach_2016_ge_monocyte_LPS.all.tsv.gz	|	184
+            Quach_2016_ge_monocyte_Pam3CSK4.all.tsv.gz	|	196
+            Quach_2016_ge_monocyte_R848.all.tsv.gz	|	191
+            Quach_2016_ge_monocyte_IAV.all.tsv.gz	|	198
+            ROSMAP_ge_brain_naive.all.tsv.gz	|	576
+            Schmiedel_2018_ge_Tfh_memory.all.tsv.gz	|	89
+            Schmiedel_2018_ge_Th17_memory.all.tsv.gz	|	89
+            Schmiedel_2018_ge_Th1_memory.all.tsv.gz	|	82
+            Schmiedel_2018_ge_Th2_memory.all.tsv.gz	|	89
+            Schmiedel_2018_ge_Th1-17_memory.all.tsv.gz	|	88
+            Schmiedel_2018_ge_Treg_memory.all.tsv.gz	|	89
+            Schmiedel_2018_ge_Treg_naive.all.tsv.gz	|	89
+            Schmiedel_2018_ge_B-cell_naive.all.tsv.gz	|	91
+            Schmiedel_2018_ge_CD4_T-cell_naive.all.tsv.gz	|	88
+            Schmiedel_2018_ge_CD4_T-cell_anti-CD3-CD28.all.tsv.gz	|	89
+            Schmiedel_2018_ge_CD8_T-cell_naive.all.tsv.gz	|	89
+            Schmiedel_2018_ge_CD8_T-cell_anti-CD3-CD28.all.tsv.gz	|	88
+            Schmiedel_2018_ge_monocyte_CD16_naive.all.tsv.gz	|	90
+            Schmiedel_2018_ge_monocyte_naive.all.tsv.gz	|	91
+            Schmiedel_2018_ge_NK-cell_naive.all.tsv.gz	|	90
+            Schwartzentruber_2018_ge_sensory_neuron.all.tsv.gz	|	98
+            TwinsUK_ge_fat.all.tsv.gz	|	381
+            TwinsUK_ge_LCL.all.tsv.gz	|	418
+            TwinsUK_ge_skin.all.tsv.gz	|	370
+            TwinsUK_ge_blood.all.tsv.gz	|	195
+            van_de_Bunt_2015_ge_pancreatic_islet.all.tsv.gz	|	117
+            FUSION_ge_adipose_naive.all.tsv.gz	|	271
+            FUSION_ge_muscle_naive.all.tsv.gz	|	288',
+             trim_ws = TRUE, comment="#", delim="|")
+           eqtl.sample.size$fileName <- tolower(eqtl.sample.size$fileName)
+           sectr.fileName <- tolower(basename(sectr.file))
+           if(sum(eqtl.sample.size$fileName == sectr.fileName)==1){
+             sectr.sample.size <- eqtl.sample.size$sample_size [eqtl.sample.size$fileName == sectr.fileName]
+             cat ("\nSecond trait sample size for the associated eQTLCatalogue is: ",sectr.sample.size)
+           }else if(is.null(sectr.sample.size)){
+             cat ("\nSecond trait sample size is missing.")
+             cat ("\nThe second trait input file does not match any entry in the eQTLCatalogue.\n")
+            q(status=1)
+           }
+           sectr.sample.size
+         })
+
   return(list(sectr.sample.size ,sectr.file))
 }
 
@@ -564,7 +629,7 @@ find.panel <-function( refLD.dir, start.bp, end.bp, CHR ) {
   panel.se <- which(panels[,1]==paste("chr",CHR,sep="") & panels[,2] <= start.bp & panels[,3]>=end.bp)
 
   if(length(panel.se)==0){
-    cat("\nThere is not any matching panel for the given interval: ", start.bp," - ",end.bp )
+    cat("\nThere is not any matching panel for the given interval: ", start.bp," - ",end.bp,"\n" )
     q(status=1)
   }else if(length(panel.se)==1){
     panel.toUse <- panel.se
@@ -572,6 +637,6 @@ find.panel <-function( refLD.dir, start.bp, end.bp, CHR ) {
     panel.toUse <- panel.se[1]
   }
 
-  return(paste(refLD.dir,ref.LD.list0[panel.toUse],sep=""))
+  return(paste(refLD.dir,"/",ref.LD.list0[panel.toUse],sep=""))
 }
 
