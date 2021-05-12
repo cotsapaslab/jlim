@@ -108,7 +108,7 @@ This will produce the following results (See `examples/MS-GENCORD_ge_LCL.out` fo
 <sub>160742014</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>85</sub> | <sub>160766482</sub> | <sub>160840829</sub> | <sub>190</sub> | <sub>ENSG00000118217</sub> | <sub>0</sub> | <sub>index SNP has been filtered out.</sub>
 <sub>160742014</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>85</sub> | <sub>160766482</sub> | <sub>160840829</sub> | <sub>190</sub> | <sub>ENSG00000226889</sub> | <sub>0</sub> | <sub>index SNP has been filtered out.</sub>
 
-In the above example, for some genes (e.g. ENSG00000118217 and ENSG00000226889), JLIM reports that "*index SNP has been filtered out.*" This is because in the eQTL Catalogue, the associations were tested only for SNPs within +/- 1 Mb from the transcription start site of each gene. Therefore, for genes that are ~1 Mb away from the index SNP, eQTL association data are available only for a partial segment of analysis window (160,766,482-160,840,829 in this case). JLIM automatically skips if the index SNP is not included in the analysis window. *Users are responsible to additionally check if enough SNPs are included in the analysis window on both sides of index SNP by examining the **startBP**-**endBP** in the output file.* 
+In the above example, for some genes (e.g. ENSG00000118217 and ENSG00000226889), JLIM reports that "*index SNP has been filtered out.*" This is because, in the eQTL Catalogue, the associations were tested only for SNPs within +/- 1 Mb from the transcription start site of each gene. Therefore, for genes that are ~1 Mb away from the index SNP, eQTL association data are available only for a partial segment of the analysis window (160,766,482-160,840,829 in this case). JLIM automatically skips if the index SNP is not included in the analysis window. *Users are responsible to additionally check if enough SNPs are included in the analysis window on both sides of index SNP by examining the **startBP**-**endBP** in the output file.* 
 
 #### GTEx v8 support:
 JLIM supports the GTEx v8 parquet data file format. The GTEx v8 summary statistics are available for download at [GTEx Google Bucket](https://console.cloud.google.com/storage/browser/gtex-resources/GTEx_Analysis_v8_QTLs). Specifically, we recommend using the European-American summary statistics (available in the `GTEx_Analysis_v8_EUR_eQTL_all_associations` subdirectory in the Google Bucket) instead of the full trans-ethnic association statistics. For the European-American GTEx v8 data, the sample size of eQTL data in each tissue can be automatically loaded with the option `--sectr-ref-db GTEx.v8.EUR`, and `refld.1kg.nfe.b38` is recommended as a reference genotype panel. For other GTEx data, `--sectr-ref-db` option is currently not available. A user is responsible to provide the correct sample size of each tissue and matching reference LD panel. 
@@ -123,7 +123,7 @@ run_jlim.sh --maintr-file examples/MS/MS.1.160697074.160933065_38.txt \
 ```
 
 #### Backward compatibility to JLIM 1.0 and 2.0:
-Previous versions of JLIM required a pre-computed permutation file to run JLIM. We still support this mode to allow users to have full control of permutation with the `--perm-file` option. The `--ref-ld` option supports the downloadable reference panels new to v2.5 as well as reference LD files prepared by `fetch.refld0.EUR.pl` script in previous JLIM versions. If the `--maintr-ld` or `--sectr-ld` option is omitted, the reference LD will be assumed. See the [backward compatibility section](https://github.com/cotsapaslab/jlim/blob/master/BackwardCompatibility.md) for the further details on how to prepare input data. The following set of commandline options will replicate the behaviors of previous versions of JLIM:
+Previous versions of JLIM required a pre-computed permutation file to run JLIM. We still support this mode to allow users to have full control of permutation with the `--perm-file` option. The `--ref-ld` option supports the downloadable reference panels new to v2.5 as well as reference LD files prepared by `fetch.refld0.EUR.pl` script in previous JLIM versions. If the `--maintr-ld` or `--sectr-ld` option is omitted, the reference LD will be assumed. See the [backward compatibility section](https://github.com/cotsapaslab/jlim/blob/master/BackwardCompatibility.md) for further details on how to prepare input data. The following set of command line options will replicate the behaviors of previous versions of JLIM:
 
 ``` r
 run_jlim.sh --maintr-file examples/MS/MS.1.160697074.160933065.txt \
@@ -151,7 +151,7 @@ By default, JLIM tests for the colocalization against all genes found in the sec
   - **usedSNPsNo**: total number of SNPs included in the analysis after all filtering
   - **startBP**: position of first SNP in the analysis window; by default, up to -100 kb from *userIdxBP*
   - **endBP**: position of last SNP in analysis window; by default, up to +100 kb from *userIdxBP*
-  - **sectrSampleSize**: sample size of secondary trait association study
+  - **sectrSampleSize**: sample size of the secondary trait association study
   - **sectrGeneName**: gene name if the secondary trait association file contains multiple genes
   - **executedPerm**: actual number of permutations/sampling iterations performed to calculate p-values
   - **desc**: JLIM status 
