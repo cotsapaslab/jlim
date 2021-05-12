@@ -31,7 +31,7 @@ JLIM is a cross-trait test for shared causal effect described in [Chun et al. Na
    - **numpy** (1.14.3 or newer)
    - **scipy** (1.0.0 or newer)
 
-6. We provide pre-processed reference genotype panels to go with JLIM. Reference genotype panels should be downloaded separatedly and unpacked before running JLIM:
+6. We provide pre-processed reference genotype panels to go with JLIM. Reference genotype panels should be downloaded separately and unpacked before running JLIM:
    - 1000GP Non-Finnish Europeans (NFE) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.nfe.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.nfe.b38.tar.gz) 
    - 1000GP Finnish (FIN) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.fin.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.fin.b38.tar.gz)
    - 1000GP East Asians (EAS) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.eas.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.eas.b38.tar.gz)
