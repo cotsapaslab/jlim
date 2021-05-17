@@ -1,4 +1,4 @@
-# Joint Likelihoood Mapping (JLIM)
+# Joint Likelihood Mapping (JLIM)
 
 JLIM is a cross-trait test for shared causal effect described in [Chun et al. Nature Genetics 2017](https://www.nature.com/articles/ng.3795). JLIM tests whether two traits – primary and secondary – are driven by shared causal effect or not. Typically, the primary trait is a large GWAS study, and the secondary trait is an expression Quantitative Trait Loci (eQTL) association study. JLIM needs only summary-level association statistics for both primary and secondary traits but can also run on permutation data generated from individual-level genotype data. The latest version is 2.5.0. 
 
@@ -31,12 +31,12 @@ JLIM is a cross-trait test for shared causal effect described in [Chun et al. Na
    - **numpy** (1.14.3 or newer)
    - **scipy** (1.0.0 or newer)
 
-6. We provide pre-processed reference genotype panels to go with JLIM. Reference genotype panels should be downloaded separatedly and unpacked before running JLIM:
-   - 1000GP Non-Finnish Europeans (NFE) (b37) (b38) 
-   - 1000GP Finnish (FIN) (b37) (b38)
-   - 1000GP East Asians (EAS) (b37) (b38)
-   - 1000GP Admixed Americans (AMR) (b37) (b38)
-   - 1000GP Africans (AFR) (b37) (b38)
+6. We provide pre-processed reference genotype panels to go with JLIM. Reference genotype panels should be downloaded separately and unpacked before running JLIM:
+   - 1000GP Non-Finnish Europeans (NFE) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.nfe.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.nfe.b38.tar.gz) 
+   - 1000GP Finnish (FIN) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.fin.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.fin.b38.tar.gz)
+   - 1000GP East Asians (EAS) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.eas.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.eas.b38.tar.gz)
+   - 1000GP Admixed Americans (AMR) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.amr.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.amr.b38.tar.gz)
+   - 1000GP Africans (AFR) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.afr.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.afr.b38.tar.gz)
 
 ## Change Log
 ### Changes to 2.5 
@@ -108,7 +108,7 @@ This will produce the following results (See `examples/MS-GENCORD_ge_LCL.out` fo
 <sub>160742014</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>85</sub> | <sub>160766482</sub> | <sub>160840829</sub> | <sub>190</sub> | <sub>ENSG00000118217</sub> | <sub>0</sub> | <sub>index SNP has been filtered out.</sub>
 <sub>160742014</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>NA</sub> | <sub>85</sub> | <sub>160766482</sub> | <sub>160840829</sub> | <sub>190</sub> | <sub>ENSG00000226889</sub> | <sub>0</sub> | <sub>index SNP has been filtered out.</sub>
 
-In the above example, for some genes (e.g. ENSG00000118217 and ENSG00000226889), JLIM reports that "*index SNP has been filtered out.*" This is because in the eQTL Catalogue, the associations were tested only for SNPs within +/- 1 Mb from the transcription start site of each gene. Therefore, for genes that are ~1 Mb away from the index SNP, eQTL association data are available only for a partial segment of analysis window (160,766,482-160,840,829 in this case). JLIM automatically skips if the index SNP is not included in the analysis window. *Users are responsible to additionally check if enough SNPs are included in the analysis window on both sides of index SNP by examining the **startBP**-**endBP** in the output file.* 
+In the above example, for some genes (e.g. ENSG00000118217 and ENSG00000226889), JLIM reports that "*index SNP has been filtered out.*" This is because, in the eQTL Catalogue, the associations were tested only for SNPs within +/- 1 Mb from the transcription start site of each gene. Therefore, for genes that are ~1 Mb away from the index SNP, eQTL association data are available only for a partial segment of the analysis window (160,766,482-160,840,829 in this case). JLIM automatically skips if the index SNP is not included in the analysis window. *Users are responsible to additionally check if enough SNPs are included in the analysis window on both sides of index SNP by examining the **startBP**-**endBP** in the output file.* 
 
 #### GTEx v8 support:
 JLIM supports the GTEx v8 parquet data file format. The GTEx v8 summary statistics are available for download at [GTEx Google Bucket](https://console.cloud.google.com/storage/browser/gtex-resources/GTEx_Analysis_v8_QTLs). Specifically, we recommend using the European-American summary statistics (available in the `GTEx_Analysis_v8_EUR_eQTL_all_associations` subdirectory in the Google Bucket) instead of the full trans-ethnic association statistics. For the European-American GTEx v8 data, the sample size of eQTL data in each tissue can be automatically loaded with the option `--sectr-ref-db GTEx.v8.EUR`, and `refld.1kg.nfe.b38` is recommended as a reference genotype panel. For other GTEx data, `--sectr-ref-db` option is currently not available. A user is responsible to provide the correct sample size of each tissue and matching reference LD panel. 
@@ -123,7 +123,7 @@ run_jlim.sh --maintr-file examples/MS/MS.1.160697074.160933065_38.txt \
 ```
 
 #### Backward compatibility to JLIM 1.0 and 2.0:
-Previous versions of JLIM required a pre-computed permutation file to run JLIM. We still support this mode to allow users to have full control of permutation with the `--perm-file` option. The `--ref-ld` option supports the downloadable reference panels new to v2.5 as well as reference LD files prepared by `fetch.refld0.EUR.pl` script in previous JLIM versions. If the `--maintr-ld` or `--sectr-ld` option is omitted, the reference LD will be assumed. See the [backward compatibility section](https://github.com/cotsapaslab/jlim/blob/master/BackwardCompatibility.md) for the further details on how to prepare input data. The following set of commandline options will replicate the behaviors of previous versions of JLIM:
+Previous versions of JLIM required a pre-computed permutation file to run JLIM. We still support this mode to allow users to have full control of permutation with the `--perm-file` option. The `--ref-ld` option supports the downloadable reference panels new to v2.5 as well as reference LD files prepared by `fetch.refld0.EUR.pl` script in previous JLIM versions. If the `--maintr-ld` or `--sectr-ld` option is omitted, the reference LD will be assumed. See the [backward compatibility section](https://github.com/cotsapaslab/jlim/blob/master/BackwardCompatibility.md) for further details on how to prepare input data. The following set of command line options will replicate the behaviors of previous versions of JLIM:
 
 ``` r
 run_jlim.sh --maintr-file examples/MS/MS.1.160697074.160933065.txt \
@@ -143,7 +143,7 @@ JLIM 2.0 provides python scripts to generate permutation data for meta-analyzed 
 The association statistics files for primary and secondary traits should be either a Plink assoc file or space/tab-delimited table. For the latter, JLIM expects the columns for **CHR** (chromosome), **BP** (base pair position), and association statistics. The association statistics can be **STAT**, **T**, or **P**. If the association statistics files use column names which are different from the above default, the column names can be specified using the [command line parameters](https://github.com/cotsapaslab/jlim/blob/master/README.md#full-list-of-command-line-options) without changing the original files. 
 
 ## Output File Format
-By default, JLIM tests for the colocalization against all genes found in the secondary trait file. Each row in the the output file corresponds to a test against each gene. The name of output file is specified by `--output-file` option. The columns in the JLIM output files have the following information: 
+By default, JLIM tests for the colocalization against all genes found in the secondary trait file. Each row in the output file corresponds to a test against each gene. The name of output file is specified by `--output-file` option. The columns in the JLIM output files have the following information: 
   - **userIdxBP**: base pair position of the index SNP provided by user
   - **actualIdxBP**: base pair position of the SNP that is most associated to the primary trait; automatically selected in the analysis window by JLIM
   - **STAT**: JLIM statistic
@@ -151,7 +151,7 @@ By default, JLIM tests for the colocalization against all genes found in the sec
   - **usedSNPsNo**: total number of SNPs included in the analysis after all filtering
   - **startBP**: position of first SNP in the analysis window; by default, up to -100 kb from *userIdxBP*
   - **endBP**: position of last SNP in analysis window; by default, up to +100 kb from *userIdxBP*
-  - **sectrSampleSize**: sample size of secondary trait association study
+  - **sectrSampleSize**: sample size of the secondary trait association study
   - **sectrGeneName**: gene name if the secondary trait association file contains multiple genes
   - **executedPerm**: actual number of permutations/sampling iterations performed to calculate p-values
   - **desc**: JLIM status 
@@ -193,9 +193,9 @@ By default, JLIM tests for the colocalization against all genes found in the sec
 - `--perm-file <FILE>`: calculate p-values using pre-permuted secondary trait association data as in JLIM 1.0 and 2.0; FILE should be a gzipped Plink  .mperm.dump.all file (default: p-value is calculated indirectly by sampling from a reference genotype panel)
 
 #### GTEx and eQTL Catalogue support:
-- `--sectr-ref-db <PRESET CONFIGURATION>`: preset configuration for GTEx and eQTL Catalogue. If specified, the data format of secondary trait association file is directly recognized, and the sample size of secondary trait cohort will be automatically loaded. Currently, we support the following three CONFIGURATIONs:
+- `--sectr-ref-db <PRESET CONFIGURATION>`: preset configuration for GTEx and eQTL Catalogue. If specified, the data format of the secondary trait association file is directly recognized, and the sample size of secondary trait cohort will be automatically loaded. Currently, we support the following three CONFIGURATIONs:
   - `--sectr-ref-db GTEx.v8.EUR` This is for GTEX v8 summary statistics calculated using only European American individuals (genome assembly b38). The data files (.parquet) have to be downloaded from [GTEx Google Bucket](https://console.cloud.google.com/storage/browser/gtex-resources/GTEx_Analysis_v8_QTLs) and specified by `--sectr-file` argument. JLIM will automatically run with `--sectr-colname-variant-id variant_id --sectr-colname-gene phenotype_id --sectr-colname-p pval_nominal`, and the `--sectr-sample-size` option will be set to the sample size of corresponding tissue.
-  - `--sectr-ref-db eQTLCatalogue` This is for downloaded summary statistic files from [eQTL Catalogue](ftp://ftp.ebi.ac.uk/pub/databases/spot/eQTL). The file path to tab-delimited flatfiles (.tsv) should be passed by `--sectr-file`. JLIM expects the corresponding tabix index files (.tbi) to be present in the same directory with the .tsv file. JLIM will automatically run with `--sectr-colname-chr chromosome --sectr-colname-bp position --sectr-colname-gene molecular_trait_id --sectr-colname-p pvalue`, and the `--sectr-sample-size` option will be set to [the sample size of corresponding study](https://github.com/eQTL-Catalogue/eQTL-Catalogue-resources/blob/master/tabix/tabix_ftp_paths.tsv). Note that some datasets in eQTL Catalogue are multi-ethnic association data, for which we do not provide a downloadable reference genotype panel to match the LD structure. The eQTL Catalogue data are based on the genome assembly b38. 
+  - `--sectr-ref-db eQTLCatalogue` This is for downloaded summary statistic files from [eQTL Catalogue](ftp://ftp.ebi.ac.uk/pub/databases/spot/eQTL). The file path to tab-delimited flat files (.tsv) should be passed by `--sectr-file`. JLIM expects the corresponding tabix index files (.tbi) to be present in the same directory with the .tsv file. JLIM will automatically run with `--sectr-colname-chr chromosome --sectr-colname-bp position --sectr-colname-gene molecular_trait_id --sectr-colname-p pvalue`, and the `--sectr-sample-size` option will be set to [the sample size of corresponding study](https://github.com/eQTL-Catalogue/eQTL-Catalogue-resources/blob/master/tabix/tabix_ftp_paths.tsv). Note that some datasets in eQTL Catalogue are multi-ethnic association data, for which we do not provide a downloadable reference genotype panel to match the LD structure. The eQTL Catalogue data are based on the genome assembly b38. 
   - `--sectr-ref-db eQTLCatalogue:remote` This is similar to `--sectr-ref-db eQTLCatalogue`, but summary statistics do not have to be locally downloaded. The slice of eQTL data corresponding to the analysis window will be retrieved from the eQTL Catalogue server using the RESTful API. For the file name in the `--sectr-file` option, please use the dataset name in the [ftp_path](https://github.com/eQTL-Catalogue/eQTL-Catalogue-resources/blob/master/tabix/tabix_ftp_paths.tsv) without the file extention "**.all.tsv.gz**" (e.g. "**Alasoo_2018_ge_macrophage_naive**").  
 
 #### SNP filtering:

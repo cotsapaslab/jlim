@@ -2,7 +2,7 @@
 JLIM 2.0 provides python scripts to generate permutation data for meta-analyzed secondary trait cohort. This allows to directly account for the subcohort-level variation in data processing and QC in meta-analyzed secondary trait data.
 
 ## Example data
-We provide example data hosted in the Sunyaev lab website: [Example Data](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/jlim_2_example.tar.gz). Please untar the example data in the same folder that the code was untared. The `examples_2.0/` folder should be in parallel with the `bin/` and `R/` directories. This dataset contains the following simulated data:
+We provide example data hosted in the Sunyaev lab website: [Example Data](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/jlim_2_example_revised.tar.gz). Please untar the example data in the same folder that the code was untared. The `examples_2.0/` folder should be in parallel with the `bin/` and `R/` directories. This dataset contains the following simulated data:
 * list of index SNPs for height GWAS (Height/Height_indexSNP.tsv) 
 * Height GWAS summary statistics 
 * peaks file containing the midpoints of two sample genomic intervals to analyze
