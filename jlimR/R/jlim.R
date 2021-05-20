@@ -140,7 +140,7 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     }
     assoc1_b.org <-  assoc1_b
 
- }
+  }
 
   assoc2.genes.res <- loadSecondTraitsSumStats(sectr.file, remDupBP=FALSE, CHR, start.bp, end.bp,
                                                col.names=sectr.col.names, sectr.ref.db = sectr.ref.db,
@@ -180,25 +180,34 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     ld0.maf.org <- ld2.maf
   }
 
-#  if (recessive.model){
-#    recess.res <- recessive.BP.update(assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org)
-#    assoc1_b <- recess.res[[1]]
-#    refgt.org <- recess.res[[2]]
-#    refgt0.org <- recess.res[[3]]
-#    ld0.org <- recess.res[[4]]
-#    ld0.maf.org <- recess.res[[5]]
-#    recessive.BP <- recess.res[[6]]
-#  }
+  #  if (recessive.model){
+  #    recess.res <- recessive.BP.update(assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org)
+  #    assoc1_b <- recess.res[[1]]
+  #    refgt.org <- recess.res[[2]]
+  #    refgt0.org <- recess.res[[3]]
+  #    ld0.org <- recess.res[[4]]
+  #    ld0.maf.org <- recess.res[[5]]
+  #    recessive.BP <- recess.res[[6]]
+  #  }
 
-#### add remove duplicates here
+  #### add remove duplicates here
   if(!exists("ld1_b"))
     ld1_b <- NULL
 
-    mainTrait.Res <- remDuplicateBPMainTrait( assoc=assoc1_b , ld=ld1_b , assocFile=maintr.file)
-    assoc1_b <- mainTrait.Res[[1]]
-    ld1_b <- mainTrait.Res[[2]]
+  mainTrait.Res <- remDuplicateBPMainTrait( assoc=assoc1_b , ld=ld1_b , assocFile=maintr.file)
+  assoc1_b <- mainTrait.Res[[1]]
+  ld1_b <- mainTrait.Res[[2]]
 
   Gene.list <-  unique(assoc2.genes$Gene)
+  if(sectr.gene.filter){
+    if(!(geneName %in% Gene.list)){
+      cat ("\nInput gene: ", geneName ," does not exist in the second trait's genes. Existing genes are below:",
+           paste(Gene.list, collapse = "\n"))
+      q(status=1)
+    }else{
+      Gene.list <- geneName
+    }
+  }
   resCounter <- 1
   for (gCounter in 1:length(Gene.list)){
     PL("\nGene name ",Gene.list[gCounter])
@@ -207,18 +216,18 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     }
     cat ("\nsectr.sample.size:", sectr.sample.size)
     results.gene <- new("jlim",
-                    userIdxBP=indSNP,
-                    actualIdxBP=NA_real_,
-                    STAT=NA_real_, pvalue=NA_real_,
-                    usedSNPsNo=NA_real_,
-                    startBP= NA_real_,
-                    endBP=NA_real_,
-                    sectrSampleSize=sectr.sample.size,
-                    sectrGeneName=Gene.list[gCounter],
-                    sectrIndSNPpvalue=NA_real_,
-                    sectrMinpvalue=NA_real_,
-                    sectrSNPWithMinpvalue=NA_real_,
-                    executedPerm=0, desc="")
+                        userIdxBP=indSNP,
+                        actualIdxBP=NA_real_,
+                        STAT=NA_real_, pvalue=NA_real_,
+                        usedSNPsNo=NA_real_,
+                        startBP= NA_real_,
+                        endBP=NA_real_,
+                        sectrSampleSize=sectr.sample.size,
+                        sectrGeneName=Gene.list[gCounter],
+                        sectrIndSNPpvalue=NA_real_,
+                        sectrMinpvalue=NA_real_,
+                        sectrSNPWithMinpvalue=NA_real_,
+                        executedPerm=0, desc="")
     assoc2 <- assoc2.genes[assoc2.genes$Gene == Gene.list[gCounter],]
     assoc2.org <- assoc2.genes.org[assoc2.genes.org$Gene == Gene.list[gCounter],]
     if(nrow(assoc2[assoc2$BP == indSNP,])<1 ){
@@ -231,12 +240,12 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     }
 
     assoc1 <- assoc1_b
-#    if (recessive.model && length(recessive.BP) >= 1){
-#      sectr.recess.SNPs <- assoc2[assoc2$BP %in%  recessive.BP,]
-#      sectr.recess.SNPs$BP <- sectr.recess.SNPs$BP +.1
-#      assoc2 <- rbind.data.frame(sectr.recess.SNPs,assoc2, stringsAsFactors=FALSE)
-#      assoc2 <- assoc2[order(assoc2$BP), ]
-#    }
+    #    if (recessive.model && length(recessive.BP) >= 1){
+    #      sectr.recess.SNPs <- assoc2[assoc2$BP %in%  recessive.BP,]
+    #      sectr.recess.SNPs$BP <- sectr.recess.SNPs$BP +.1
+    #      assoc2 <- rbind.data.frame(sectr.recess.SNPs,assoc2, stringsAsFactors=FALSE)
+    #      assoc2 <- assoc2[order(assoc2$BP), ]
+    #    }
     assoc2 <- remDuplicateBP(assoc2, sectr.file)
     if (nrow(assoc2)==0){
       exit_desc ="Number of remaining SNPs in the second trait for the gene is zero"
@@ -264,7 +273,7 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
 
     if(nrow(assoc2[assoc2$BP == indSNP,])<1 || nrow(assoc1)< min.SNPs.count){
       if (nrow(assoc2[assoc2$BP == indSNP,])<1)
-         exit_desc ="Index SNP of second trait is filtered out since it is missing in refrence LD."
+        exit_desc ="Index SNP of second trait is filtered out since it is missing in refrence LD."
       else if (nrow(assoc1)< min.SNPs.count)
         exit_desc ="too few common SNPs to run JLIM"
 
@@ -405,7 +414,7 @@ remDuplicateBPMainTrait <-  function(assoc, ld, assocFile){
   if (sum(is.na(assoc$P)) > 0) {
     cat("\nNumber of NA P_values:", sum(is.na(assoc$P)),"in", assocFile ,"has been removed.")
     if(!is.null(ld))
-        ld <- ld[!is.na(assoc$P), !is.na(assoc$P)]
+      ld <- ld[!is.na(assoc$P), !is.na(assoc$P)]
     assoc <- assoc[!is.na(assoc$P), ]
   }
 
@@ -415,7 +424,7 @@ remDuplicateBPMainTrait <-  function(assoc, ld, assocFile){
     BP_frqs <- data.frame(table(assoc$BP))
     duplicate_BP <- BP_frqs[BP_frqs$Freq > 1,1]
     if(!is.null(ld))
-         ld <- ld[!(assoc$BP %in% duplicate_BP), !(assoc$BP %in% duplicate_BP)]
+      ld <- ld[!(assoc$BP %in% duplicate_BP), !(assoc$BP %in% duplicate_BP)]
     assoc <- assoc[ !(assoc$BP %in% duplicate_BP) ,]
     cat("\n",length(duplicate_BP)," SNP's at positions ", duplicate_BP,"has been removed.")
   }
@@ -618,7 +627,7 @@ loadSecondTraitsSumStats<- function(fileName, remDupBP=TRUE, CHR, start.bp, end.
 
   if(nrow(assoc[assoc$BP == indSNP,])<1 ){
     cat("\nIndex SNP is missing in the second trait.")
-#    stop()
+    #    stop()
   }
 
   if(!c("Gene") %in% names(assoc))
@@ -1027,7 +1036,7 @@ matchMarkers<- function( assoc1, assoc2,  start.bp, end.bp, withPerm,
   if(is.null(ld2))
     ld2 <- ld0
 
-   reslist <-  list(assoc1, assoc2,refgt, ld1,ld2, ld0.maf,  permmat)
+  reslist <-  list(assoc1, assoc2,refgt, ld1,ld2, ld0.maf,  permmat)
 
   catE(paste("After SNP Matching #sample/SNPs in first trait:",nrow(assoc1)," second trait:",nrow(assoc2),
              " ref panel:",nrow(refgt)," start bp:", start.bp," end bp:", end.bp," offline perm:", withPerm))
