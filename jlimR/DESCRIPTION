@@ -1,7 +1,7 @@
 Package: jlimR
 Type: Package
 Title: Joint Likelihood Mapping (JLIM)
-Version: 2.5.0
+Version: 2.5.1
 Authors@R: c(person("Sung", "Chun", role = c("aut", "cre"),
 	         email = "SungGook.Chun@childrens.harvard.edu"),
 	   person("Sebastian", "Akle", role = "aut",

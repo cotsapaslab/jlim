@@ -8,7 +8,7 @@
 #' @slot endBP end position of the tested locus
 #' @slot sectrSampleSize end position of the tested locus
 #' @slot sectrGeneName name of the Gene in case of multiple gene in the second trait
-#' @slot sectrIndSNPpvalue pvalue of the indexSNP in the second trait.
+#' @slot sectrIndSNPpvalue pvalue of the actualIndSNP in the second trait.
 #' @slot sectrMinpvalue minimum pvalue of in the second trait.
 #' @slot sectrSNPWithMinpvalue  SNP with the minimum pvalue in the second trait
 #' @slot desc  status of the JLIM test
@@ -44,7 +44,7 @@ setMethod("getVec.jlim",
             c(object@userIdxBP, object@actualIdxBP, object@STAT, object@pvalue,
               object@usedSNPsNo, object@startBP, object@endBP, object@sectrSampleSize,
               object@sectrGeneName, object@sectrIndSNPpvalue, object@sectrMinpvalue,
-              object@executedPerm, object@desc)
+              format(object@executedPerm, scientific = FALSE), object@desc)
           })
 
 #' Run Joint Likelihood Mapping (JLIM) test
@@ -180,15 +180,15 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     ld0.maf.org <- ld2.maf
   }
 
-  #  if (recessive.model){
-  #    recess.res <- recessive.BP.update(assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org)
-  #    assoc1_b <- recess.res[[1]]
-  #    refgt.org <- recess.res[[2]]
-  #    refgt0.org <- recess.res[[3]]
-  #    ld0.org <- recess.res[[4]]
-  #    ld0.maf.org <- recess.res[[5]]
-  #    recessive.BP <- recess.res[[6]]
-  #  }
+  if (recessive.model){
+    recess.res <- recessive.BP.update(assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org)
+    assoc1_b <- recess.res[[1]]
+    refgt.org <- recess.res[[2]]
+    refgt0.org <- recess.res[[3]]
+    ld0.org <- recess.res[[4]]
+    ld0.maf.org <- recess.res[[5]]
+    recessive.BP <- recess.res[[6]]
+  }
 
   #### add remove duplicates here
   if(!exists("ld1_b"))
@@ -240,12 +240,12 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
     }
 
     assoc1 <- assoc1_b
-    #    if (recessive.model && length(recessive.BP) >= 1){
-    #      sectr.recess.SNPs <- assoc2[assoc2$BP %in%  recessive.BP,]
-    #      sectr.recess.SNPs$BP <- sectr.recess.SNPs$BP +.1
-    #      assoc2 <- rbind.data.frame(sectr.recess.SNPs,assoc2, stringsAsFactors=FALSE)
-    #      assoc2 <- assoc2[order(assoc2$BP), ]
-    #    }
+    if (recessive.model && length(recessive.BP) >= 1){
+      sectr.recess.SNPs <- assoc2[assoc2$BP %in%  recessive.BP,]
+      sectr.recess.SNPs$BP <- sectr.recess.SNPs$BP +.1
+      assoc2 <- rbind.data.frame(sectr.recess.SNPs,assoc2, stringsAsFactors=FALSE)
+      assoc2 <- assoc2[order(assoc2$BP), ]
+    }
     assoc2 <- remDuplicateBP(assoc2, sectr.file)
     if (nrow(assoc2)==0){
       exit_desc ="Number of remaining SNPs in the second trait for the gene is zero"
@@ -275,9 +275,10 @@ jlim.test <- function(maintr.file, sectr.file, refld.file=NULL, secld.file=NULL,
       if (nrow(assoc2[assoc2$BP == indSNP,])<1)
         exit_desc ="Index SNP of second trait is filtered out since it is missing in refrence LD."
       else if (nrow(assoc1)< min.SNPs.count)
-        exit_desc ="too few common SNPs to run JLIM"
+        exit_desc ="too few SNPs to run JLIM"
 
       if (nrow(assoc1) > 0) {
+        results.gene@usedSNPsNo=nrow(assoc1)
         results.gene@desc <- exit_desc
         results.gene@startBP= min(assoc1$BP)
         results.gene@endBP= max(assoc1$BP)
@@ -379,6 +380,8 @@ readTraitStat <- function(fileName, CHR, col.names){
   assoc <- colNamesUpdate(fileName, data = assoc, col.names)
   if("CHR" %in% colnames(assoc) && "BP" %in% colnames(assoc))
   {
+    assoc$CHR <- as.numeric(gsub("chr", "", tolower(assoc$CHR)))
+
     assoc <- assoc[(assoc$CHR ==CHR | assoc$CHR ==0 ), ]
 
     if ("TEST" %in% colnames(assoc)) {
@@ -542,6 +545,7 @@ eQTLCatalogueExtract <- function(fileName, region,col.names){
       cat("\nNumber of the fetched SNPs from eQTLCaltalogue for the input region: ",region," is Zero.\n")
       q(status=1)
     }
+    fetch_table <- as.data.frame(lapply(fetch_table, function(x) { if(is.character(x)) gsub("[\r\n]", "", x) else x }))
   }else{
     cat("\nCould not fetch any data from eQTLCaltalogue check the connection!\n")
     q(status=1)
@@ -616,6 +620,11 @@ loadSecondTraitsSumStats<- function(fileName, remDupBP=TRUE, CHR, start.bp, end.
       assoc <-loadTraitsSumStatsParquet(fileName, CHR, start.bp, end.bp, col.names )
     else
       assoc <- readTraitStat(fileName, CHR, col.names)
+  }
+  if(ncol(assoc)>=1){
+    catE(paste("\nSample of the rows:"))
+    catE(paste(colnames(assoc), collapse=" "))
+    catE(paste(assoc[1,], collapse=" "))
   }
 
   if(nrow(assoc)!=0)
@@ -706,8 +715,28 @@ SNPselction <- function( assoc1, assoc2, ld1, ld2, ld0.maf, permmat, r2res,
                          withPerm, refgt0, perm.count, sectr.sample.size,
                          min.SNPs.count, min.pvalue, indSNP){
 
+  jlim.res <- new("jlim",
+                  userIdxBP=NA_real_,
+                  actualIdxBP=NA_real_,
+                  STAT=NA_real_, pvalue=NA_real_,
+                  usedSNPsNo=NA_real_,
+                  startBP= NA_real_,
+                  endBP=NA_real_,
+                  sectrSampleSize=sectr.sample.size,
+                  sectrGeneName="",
+                  sectrIndSNPpvalue=NA_real_,
+                  sectrMinpvalue=NA_real_,
+                  sectrSNPWithMinpvalue=NA_real_,
+                  executedPerm=0, desc="",permmat=permmat)
+
   assoc1.sel <- assoc1$BP[assoc1$P <= 0.1]
   assoc2.sel <- assoc2$BP[assoc2$P <= 0.1]
+
+  if (length(assoc1.sel) == 0 | length(assoc2.sel) == 0){
+    jlim.res@desc <- "There is no remaining SNP with assoc P <= 0.1."
+    cat("\n",jlim.res@desc,"\n")
+    return(jlim.res)
+  }
   #  PL("Pvalue-Threshold", min.pvalue)
 
   markers.t <- union(assoc1.sel, assoc2.sel)
@@ -742,23 +771,19 @@ SNPselction <- function( assoc1, assoc2, ld1, ld2, ld0.maf, permmat, r2res,
     stop()
   }
   best1 <- which.max(abs(assoc1.t$Z))
-  sectrIndSNPpvalue <- assoc2$P[assoc2$BP==indSNP]
+  actualIdxBP=assoc1.t$BP[best1] #snp with the min pvalue in main trait
+  sectrIndSNPpvalue <- assoc2$P[assoc2$BP==actualIdxBP]
   sectrMinpvalue <- min(assoc2$P)
-  sectrSNPWithMinpvalue <-assoc2$BP[ assoc2$P==min(assoc2$P)][1]
-  jlim.res <- new("jlim",
-                  userIdxBP=assoc1.t$BP[best1],
-                  actualIdxBP=assoc1.t$BP[best1],
-                  STAT=NA_real_, pvalue=NA_real_,
-                  usedSNPsNo=nrow(assoc1.t),
-                  startBP= min(assoc1.t$BP),
-                  endBP= max(assoc1.t$BP),
-                  sectrSampleSize=sectr.sample.size,
-                  sectrGeneName="",
-                  sectrIndSNPpvalue=sectrIndSNPpvalue,
-                  sectrMinpvalue=sectrMinpvalue,
-                  sectrSNPWithMinpvalue=sectrSNPWithMinpvalue,
-                  desc="", executedPerm=0,
-                  permmat=permmat)
+  sectrSNPWithMinpvalue <-assoc2$BP[ assoc2$P==min(assoc2$P)]
+
+  jlim.res@userIdxBP=indSNP
+  jlim.res@actualIdxBP=assoc1.t$BP[best1]
+  jlim.res@usedSNPsNo=nrow(assoc1.t)
+  jlim.res@startBP=min(assoc1.t$BP)
+  jlim.res@endBP=max(assoc1.t$BP)
+  jlim.res@sectrIndSNPpvalue=sectrIndSNPpvalue
+  jlim.res@sectrMinpvalue=sectrMinpvalue
+  jlim.res@sectrSNPWithMinpvalue=sectrSNPWithMinpvalue
 
   # check the number of remaining snps in the assoc1
   if(nrow(assoc1.t) < min.SNPs.count ){
@@ -807,7 +832,7 @@ loadMainLD<- function( file, assoc, ldmatrix, start.bp, end.bp){
 
   if(ldmatrix){
     catE(paste("\nMain ld file is a ld-matrix. "))
-    ld  <- read.delim(file=file, header=FALSE, sep="\t", stringsAsFactors=FALSE)
+    ld  <- read.table(file=file, header=FALSE, stringsAsFactors=FALSE)
     if( !(nrow(ld) == nrow(assoc) )){
       cat("\nNumber of the SNPs in main trait and its ld matrix does not match.\n")
       stop(0)
@@ -1327,7 +1352,6 @@ perm.test <- function (assoc1, assoc2, permmat, ld0, ld2,
 
   NULLGAP
 }
-
 recessive.BP.update <- function (assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org){
 
   recessive.BP <- assoc1_b$BP[duplicated(assoc1_b$BP)]
@@ -1340,23 +1364,25 @@ recessive.BP.update <- function (assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.m
 
     refgt0.org.recess.SNPs <- refgt0.org[refgt.org$POS %in%  recessive.BP,]
     rownames(refgt0.org.recess.SNPs) <- paste(rownames(refgt0.org.recess.SNPs), ".1", sep = "")
-    refgt0.org <- rbind.data.frame(refgt0.org.recess.SNPs,refgt0.org, stringsAsFactors=FALSE)
+    refgt0.org <- rbind.data.frame(refgt0.org.recess.SNPs,refgt0.org,stringsAsFactors=FALSE)
     refgt0.org <- refgt0.org[order(refgt.new.POS), ]
 
-    ld0.maf.org <-c(ld0.maf.org,ld0.maf.org[refgt.org$POS %in%  recessive.BP])
+    ld0.maf.org <-c(ld0.maf.org[refgt.org$POS %in%  recessive.BP],ld0.maf.org)
     ld0.maf.org <- ld0.maf.org[order(refgt.new.POS)]
-    ld0.org <-cbind.data.frame(ld0.org, ld0.org[,refgt.org$POS %in%  recessive.BP], stringsAsFactors=FALSE)
-    ld0.org <-rbind.data.frame(ld0.org, ld0.org[refgt.org$POS %in%  recessive.BP,], stringsAsFactors=FALSE)
+    ld0.org <-cbind.data.frame( ld0.org[,refgt.org$POS %in%  recessive.BP], ld0.org,stringsAsFactors=FALSE)
+    ld0.org <-rbind.data.frame( ld0.org[refgt.org$POS %in%  recessive.BP,],ld0.org,stringsAsFactors=FALSE)
 
     ld0.org <- ld0.org[order(refgt.new.POS), ]
     ld0.org <- ld0.org[,order(refgt.new.POS) ]
 
-    refgt.org <- rbind.data.frame(refgt.org.recess.SNPs,refgt.org, stringsAsFactors=FALSE)
+    refgt.org <- rbind.data.frame(refgt.org.recess.SNPs,refgt.org,stringsAsFactors=FALSE)
     refgt.org <- refgt.org[order(refgt.org$POS), ]
   }
   reslist <-  list(assoc1_b, refgt.org, refgt0.org, ld0.org, ld0.maf.org, recessive.BP)
   return(reslist)
 }
+
+
 
 standardize.hap <- function (refgt){
   # pre-standardize haplotypes to the mean of 0 and variance of 1/2
@@ -1391,6 +1417,10 @@ perm.test2 <- function (assoc1, assoc2, ld0, refgt,
   NULLGAP <- c()
   # In bundles of 10K
   nperm <- 10000
+  if (nperm > perm.count)
+    nperm <- perm.count
+  cat("\n=============== number of permutaion is:", perm.count)
+
   maxIT <- ceiling(perm.count / nperm)
   snpIds <- rownames(refgt)
   refgt <- toGT(refgt)

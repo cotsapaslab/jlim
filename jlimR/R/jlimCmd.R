@@ -91,8 +91,8 @@ run.jlim <-  function() {
     'min-pvalue', 'f', 1, "numeric",
     'min-SNPs-count', 'l', 1, "numeric",
     'save-to-rda-file','a',1,"character",
-    'save-to-rda-p','b',1,"numeric"
-#    'recessive-model', '9', 0, "character"
+    'save-to-rda-p','b',1,"numeric",
+    'recessive-model', '9', 0, "character"
   ), byrow=TRUE, ncol=4)
 
   default.min.SNPs.count <- 50
@@ -134,8 +134,8 @@ run.jlim <-  function() {
     q(status=1)
   }
 
-  maintr.file <- opt[["maintr-file"]]
-  sectr.file <- opt[["sectr-file"]]
+  maintr.file <- gsub("[\r\n]", "",opt[["maintr-file"]])
+  sectr.file <- gsub("[\r\n]", "",opt[["sectr-file"]])
   refld.file <- NULL
   ref.LD <- NULL
 #######################
@@ -201,7 +201,7 @@ run.jlim <-  function() {
   if ( is.null(opt[["ref-ld"]]) ) {
     cat("\nMissing options: --ref-ld ")
   } else{
-    ref.LD <- opt[["ref-ld"]]
+    ref.LD <- gsub("[\r\n]", "",opt[["ref-ld"]])
     if (is.na(file.info(ref.LD)$isdir)) {
       cat(paste("\nFile or directory does not exist:", ref.LD),"\n")
       q(status=1)
@@ -243,12 +243,12 @@ if (is.null(opt[["perm-file"]])){
     }
   } else{
     withPermFile <-TRUE
-    perm.file <- opt[["perm-file"]]
+    perm.file <- gsub("[\r\n]", "",opt[["perm-file"]])
     sectr.sample.size <- NA_real_
   }
   ##########
   if(!is.null(opt[["sectr-ld-file"]]))
-    secld.file <- opt[["sectr-ld-file"]]
+    secld.file <- gsub("[\r\n]", "",opt[["sectr-ld-file"]])
 
   #############
 
@@ -315,7 +315,7 @@ if (is.null(opt[["perm-file"]])){
   }
 
   if ( !is.null(opt[["sectr-gene-filter"]]) ) {
-    geneNameToFilter <- opt[["sectr-gene-filter"]]
+    geneNameToFilter <- gsub("[\r\n]", "",opt[["sectr-gene-filter"]])
     sectr.gene.filter <- TRUE
   }else{
     sectr.gene.filter <- FALSE
@@ -323,7 +323,7 @@ if (is.null(opt[["perm-file"]])){
   PL ("second trait Gene filter(False=All Genes) ", sectr.gene.filter)
 
   if ( !is.null(opt[["output-file"]]) ){
-    resultFileName <- opt[["output-file"]]
+    resultFileName <- gsub("[\r\n]", "",opt[["output-file"]])
     if(!file.exists(dirname(resultFileName) ) )
     {
       cat("\nOutput file's path is not valid: ", dirname(resultFileName))
@@ -399,14 +399,14 @@ if (is.null(opt[["perm-file"]])){
     PL (".Rda files path and prefix ", rda.file)
     PL ("Min pvalue to write rda files for each run ", rda.pvalue)
   }
-#  if (!is.null(opt[["recessive-model"]])){
-#    if ( tolower(opt[["recessive-model"]])=="t" || tolower(opt[["recessive-model"]])=="true")
-#      recessive.model<- T
-#    else
-#      recessive.model<- F
-#  }else
-#    recessive.model <- default.recessive.model
-#  PL ("recessive model: ", recessive.model)
+  if (!is.null(opt[["recessive-model"]])){
+    if ( tolower(opt[["recessive-model"]])=="t" || tolower(opt[["recessive-model"]])=="true")
+      recessive.model<- T
+    else
+      recessive.model<- F
+  }else
+    recessive.model <- default.recessive.model
+  PL ("recessive model ", recessive.model)
 
   results.allgenes <-
     jlim.test(maintr.file=maintr.file, sectr.file=sectr.file, refld.file=refld.file,
@@ -415,7 +415,7 @@ if (is.null(opt[["perm-file"]])){
               r2res=r2res, withPermFile, perm.count=max.perm,
               sectr.gene.filter, geneName=geneNameToFilter, indSNP=indexSNP,
               maintr.col.names=maintr.col.names, sectr.col.names=sectr.col.names,
-              resultFileName, sectr.sample.size, min.SNPs.count=default.min.SNPs.count,
+              resultFileName, sectr.sample.size, min.SNPs.count=min.SNPs.count,
               sectr.ref.db=sectr.ref.db, min.MAF= min.MAF , min.pvalue= min.pvalue,
               mainld.file=mainld.file, mainld.ldmatrix= mainld.ldmatrix, rda.file=rda.file,
               rda.pvalue=rda.pvalue, recessive.model=recessive.model)
@@ -450,7 +450,7 @@ sectr.sample.size.lookup <-function( sectr.file ,sectr.ref.db, sectr.sample.size
          "gtex.v8.eur"={
            gtex.sample.size <- readr::read_delim(
              '  tissue                 |   sample_size
-             # ----------------------------
+# ----------------------------
             Adipose_Subcutaneous      |   479
             Adipose_Visceral_Omentum  |   393
             Adrenal_Gland             |   194
@@ -518,7 +518,7 @@ sectr.sample.size.lookup <-function( sectr.file ,sectr.ref.db, sectr.sample.size
          "eqtlcatalogue"={
            eqtl.sample.size <- readr::read_delim(
              '  fileName                 |   sample_size
-             # ----------------------------
+# ----------------------------
             Alasoo_2018_ge_macrophage_naive.all.tsv.gz	|	84
             Alasoo_2018_ge_macrophage_IFNg.all.tsv.gz	|	84
             Alasoo_2018_ge_macrophage_Salmonella.all.tsv.gz	|	84

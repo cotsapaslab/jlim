@@ -209,6 +209,8 @@ load.isLD1.dosage2 <- function(dosage.file, bpset) {
     dosage1 <- read.delim(dosage.file, header=TRUE, stringsAsFactors=FALSE,
                           sep="\t")
     colnames(dosage1)[1:4] <- c( "rsId","Chrom", "POS",  "BP")
+    dosage1$Chrom <- as.numeric(gsub("chr", "", tolower(dosage1$Chrom)))
+
     dosage1 <- dosage1[dosage1$POS %in% bpset, ]
 
     gt1 <- dosage1[, 5:ncol(dosage1)]
