@@ -32,11 +32,12 @@ JLIM is a cross-trait test for shared causal effect described in [Chun et al. Na
    - **scipy** (1.0.0 or newer)
 
 6. We provide pre-processed reference genotype panels to go with JLIM. Reference genotype panels should be downloaded separately and unpacked before running JLIM:
-   - 1000GP Non-Finnish Europeans (NFE) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.nfe.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.nfe.b38.tar.gz) 
-   - 1000GP Finnish (FIN) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.fin.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.fin.b38.tar.gz)
-   - 1000GP East Asians (EAS) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.eas.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.eas.b38.tar.gz)
-   - 1000GP Admixed Americans (AMR) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.amr.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.amr.b38.tar.gz)
-   - 1000GP Africans (AFR) [b37](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.afr.b37.tar.gz) [b38](http://genetics.bwh.harvard.edu/wiki/sunyaevlab/_media/refld.1kg.afr.b38.tar.gz)
+   - 1000GP Non-Finnish Europeans (NFE) [b37](https://www.dropbox.com/s/1uaw5zlpwhz3ipz/refld.1kg.nfe.b37.tar.gz?dl=0) [b38](https://www.dropbox.com/s/hzglelqwqz0u5er/refld.1kg.nfe.b38.tar.gz?dl=0) 
+   - 1000GP Finnish (FIN) [b37](https://www.dropbox.com/s/5446eh0754l6r6w/refld.1kg.fin.b37.tar.gz?dl=0) [b38](https://www.dropbox.com/s/ehpsyylwy59sbtr/refld.1kg.fin.b38.tar.gz?dl=0)
+   - 1000GP East Asians (EAS) [b37](https://www.dropbox.com/s/ywmnal6vvkedhj9/refld.1kg.eas.b37.tar.gz?dl=0) [b38](https://www.dropbox.com/s/97mkotryob5b18y/refld.1kg.eas.b38.tar.gz?dl=0)
+   - 1000GP South Asians (SAS) [b37](https://www.dropbox.com/s/allebkaj9htabtp/refld.1kg.sas.b37.tar.gz?dl=0) [b38](https://www.dropbox.com/s/21xumxzfyz0vf5k/refld.1kg.sas.b38.tar.gz?dl=0)
+   - 1000GP Admixed Americans (AMR) [b37](https://www.dropbox.com/s/j0jhvbp04dybp0u/refld.1kg.amr.b37.tar.gz?dl=0) [b38](https://www.dropbox.com/s/lz6unaj2x11yca9/refld.1kg.amr.b38.tar.gz?dl=0)
+   - 1000GP Africans (AFR) [b37](https://www.dropbox.com/s/5vqazbto3jy0v4s/refld.1kg.afr.b37.tar.gz?dl=0) [b38](https://www.dropbox.com/s/czszbls41cgk4wg/refld.1kg.afr.b38.tar.gz?dl=0)
 
 ## Change Log
 ### Changes to 2.5 
