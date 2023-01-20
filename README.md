@@ -217,5 +217,5 @@ Nat Genet. 2017 Apr;49(4):600-605. doi: 10.1038/ng.3795.
 * JLIM 2.0  
 Leveraging pleiotropy to discover and interpret GWAS results for sleep-associated traits.  
 Chun S*, Akle S*, Teodosiadis A, Cade BE, Wang H, Sofer T, Evans DS, Stone KL, Gharib SA, Mukherjee S, Palmer LJ, Hillman D, Rotter JI, Hanis CL, Stamatoyannopoulos JA, Redline S, Cotsapas C*, Sunyaev SR*.  
-BioRxiv. 2022. doi: 10.1101/832162 [(preprint)](https://www.biorxiv.org/content/10.1101/832162v2).  
+PLoS Genet. 2022 Dec 27;18(12):e1010557. doi: 10.1371/journal.pgen.1010557.  
 \* equal contribution.
